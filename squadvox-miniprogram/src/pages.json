@@ -3,7 +3,8 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "SquadVox 开黑语聊"
+        "navigationBarTitleText": "SquadVox 开黑语聊",
+        "navigationStyle": "custom"
       }
     },
     {

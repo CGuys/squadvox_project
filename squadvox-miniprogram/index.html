@@ -9,7 +9,36 @@
         '<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0' +
         (coverSupport ? ', viewport-fit=cover' : '') + '" />')
     </script>
-    <title></title>
+    <title>SquadVox 开黑语聊房 | 高保真交互</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              vox: {
+                dark: '#080b11',
+                card: '#111723',
+                cardLight: '#182030',
+                elevated: '#1e293b',
+                border: '#243047',
+                neon: '#00f2fe',
+                purple: '#7928ca',
+                accent: '#6366f1',
+                live: '#10b981',
+                danger: '#f43f5e',
+                gold: '#f59e0b'
+              }
+            },
+            fontFamily: {
+              sans: ['-apple-system', 'BlinkMacSystemFont', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'Inter', 'sans-serif']
+            }
+          }
+        }
+      }
+    </script>
     <!--preload-links-->
     <!--app-context-->
   </head>
