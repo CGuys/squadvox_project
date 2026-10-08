@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>SquadVox 开黑语聊房 | 高保真交互原型 V1.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vox: {
+                            dark: '#080b11',
+                            card: '#111723',
+                            cardLight: '#182030',
+                            elevated: '#1e293b',
+                            border: '#243047',
+                            neon: '#00f2fe',
+                            purple: '#7928ca',
+                            accent: '#6366f1',
+                            live: '#10b981',
+                            danger: '#f43f5e',
+                            gold: '#f59e0b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(8, 11, 17, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.35);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+
+        /* Voice Wave Animations */
+        @keyframes voicePulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.75);
+            }
+
+            70% {
+                transform: scale(1.06);
+                box-shadow: 0 0 0 12px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .voice-active {
+            animation: voicePulse 1.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
+            border-color: #10b981 !important;
+        }
+
+        @keyframes soundBar {
+
+            0%,
+            100% {
+                height: 4px;
+            }
+
+            50% {
+                height: 18px;
+            }
+        }
+
+        .bar-1 {
+            animation: soundBar 0.7s infinite 0.1s ease-in-out;
+        }
+
+        .bar-2 {
+            animation: soundBar 0.9s infinite 0.3s ease-in-out;
+        }
+
+        .bar-3 {
+            animation: soundBar 0.6s infinite 0.2s ease-in-out;
+        }
+
+        .bar-4 {
+            animation: soundBar 0.8s infinite 0.4s ease-in-out;
+        }
+
+        /* Glass Effect */
+        .glass-card {
+            background: rgba(17, 23, 35, 0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-nav {
+            background: rgba(8, 11, 17, 0.94);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
+        }
+
+        .glow-accent {
+            box-shadow: 0 0 24px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Device frame wrap */
+        .mobile-frame-wrap {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-0 md:p-6 overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+
+    <!-- Desktop Top Control Bar -->
+    <header
+        class="w-full max-w-4xl hidden md:flex items-center justify-between mb-4 px-4 py-2.5 bg-vox-card rounded-2xl border border-vox-border shadow-xl">
+        <div class="flex items-center gap-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-cyan-400 flex items-center justify-center font-black tracking-wider text-slate-950 text-base shadow-md">
+                SV
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-bold text-white text-base tracking-wide">SquadVox 开黑语聊房</h1>
+                    <span
+                        class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        TRTC 引擎已就绪
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400">微信小程序 V1.0 正式版 • 完整闭环交互原型</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="flex items-center gap-3">
+            <button onclick="toggleAudioPreviewSound()" id="soundFxBtn"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                <i class="fa-solid fa-volume-high text-indigo-400"></i>
+                <span>交互音效: 开</span>
+            </button>
+
+            <button onclick="toggleDeviceView()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-md transition">
+                <i class="fa-solid fa-mobile-screen"></i>
+                <span id="viewModeText">切换全屏模式</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Simulator Frame -->
+    <main id="appContainer"
+        class="mobile-frame-wrap w-full md:w-[414px] h-[100vh] md:h-[844px] bg-vox-dark md:rounded-[42px] md:border-[10px] md:border-slate-800 shadow-2xl relative flex flex-col overflow-hidden">
+
+        <!-- WeChat Capsule & Status Bar Simulation -->
+        <div
+            class="w-full pt-3 pb-2 px-4 flex items-center justify-between z-30 select-none bg-vox-dark/95 border-b border-white/[0.04]">
+            <!-- Time & System Icons -->
+            <div class="flex items-center gap-2 text-xs font-semibold tracking-wider text-slate-300">
+                <span id="mockClock">20:15</span>
+                <i class="fa-solid fa-signal text-[10px] opacity-80"></i>
+                <i class="fa-solid fa-wifi text-[10px] opacity-80"></i>
+            </div>
+
+            <!-- Center Title -->
+            <div class="text-xs font-bold tracking-wide text-slate-200 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                <span id="topBarTitle">SquadVox 开黑大厅</span>
+            </div>
+
+            <!-- WeChat Capsule (胶囊按钮) -->
+            <div
+                class="flex items-center gap-2.5 bg-black/40 border border-white/10 px-3 py-1 rounded-full text-slate-300 text-xs">
+                <button onclick="openMiniProgramMenu()" title="小程序菜单" class="hover:text-white transition">
+                    <i class="fa-solid fa-ellipsis"></i>
+                </button>
+                <span class="w-[1px] h-3 bg-white/20"></span>
+                <button onclick="minimizeMock()" title="关闭/最小化" class="hover:text-white transition">
+                    <i class="fa-regular fa-circle-dot"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Active Floating Audio Bar (切出房间并在大厅/名片浏览时的常驻悬浮条) -->
+        <div id="minimizedVoiceBar"
+            class="hidden absolute top-12 left-3 right-3 z-40 bg-gradient-to-r from-indigo-950/95 via-slate-900/95 to-slate-900/95 border border-indigo-500/40 rounded-2xl p-2.5 shadow-2xl backdrop-blur-md flex items-center justify-between transition-all">
+            <div class="flex items-center gap-2.5 cursor-pointer flex-1" onclick="switchTab('room')">
+                <div class="relative">
+                    <div
+                        class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white text-xs">
+                        <i class="fa-solid fa-headset text-sm"></i>
+                    </div>
+                    <span
+                        class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full animate-ping"></span>
+                </div>
+                <div class="overflow-hidden">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-bold text-white truncate max-w-[130px]"
+                            id="minimizedRoomName">冲星王者5排速推房</span>
+                        <span
+                            class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 shrink-0 font-medium">TRTC
+                            在线</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 flex items-center gap-1 truncate">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                        <span id="minimizedRoomCount">4人</span> • 点击返回语音房
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <button onclick="toggleGlobalMic()" id="floatingMicBtn" title="切换麦克风"
+                    class="w-8 h-8 rounded-full bg-slate-800 text-emerald-400 hover:bg-slate-700 flex items-center justify-center text-xs transition">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <button onclick="leaveRoomConfirm()" title="退出房间"
+                    class="w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 flex items-center justify-center text-xs transition">
+                    <i class="fa-solid fa-phone-slash"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Viewport Container for Pages -->
+        <div id="pagesViewport" class="flex-1 overflow-y-auto relative pb-20">
+
+            <!-- ============================================== -->
+            <!-- VIEW 1: LOBBY PAGE (开黑大厅)                  -->
+            <!-- ============================================== -->
+            <section id="pageLobby" class="p-4 space-y-4">
+
+                <!-- Banner Hero: 极速发车 -->
+                <div
+                    class="relative rounded-2xl overflow-hidden p-4 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 border border-indigo-500/30 shadow-xl">
+                    <div
+                        class="absolute -right-6 -bottom-6 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none">
+                    </div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span
+                                class="text-[10px] uppercase font-black tracking-widest text-cyan-400 flex items-center gap-1">
+                                <i class="fa-solid fa-bolt"></i> Low Latency TRTC
+                            </span>
+                            <h2 class="text-lg font-black text-white mt-1">SquadVox 极速开黑</h2>
+                            <p class="text-xs text-slate-300 mt-0.5">免加好友 • 低延迟连麦 • 闪电发车</p>
+                        </div>
+                        <button onclick="openCreateRoomModal()"
+                            class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-500/25 active:scale-95 transition">
+                            <i class="fa-solid fa-plus-circle text-sm"></i>
+                            <span>创建车队</span>
+                        </button>
+                    </div>
+
+                    <!-- Quick Game Stats Bar -->
+                    <div
+                        class="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300">
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-400">我的名片:</span>
+                            <span class="font-semibold text-cyan-300" id="lobbyMyRank">无双王者 28星</span>
+                            <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]"
+                                id="lobbyMyPos">发育路 / 游走</span>
+                        </div>
+                        <button onclick="switchTab('profile')"
+                            class="text-indigo-400 hover:text-indigo-300 text-xs flex items-center gap-1">
+                            <span>资料设置</span>
+                            <i class="fa-solid fa-angle-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Compliance Mini Alert -->
+                <div
+                    class="bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2 text-[11px] text-amber-300 flex items-start gap-2">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5 text-xs text-amber-400 shrink-0"></i>
+                    <span>合规提示：所有段位数据由玩家自主手动录入，本工具与腾讯官方及《王者荣耀》无关联。</span>
+                </div>
+
+                <!-- Filter Controls (车队模式与标签) -->
+                <div class="space-y-2">
+                    <!-- Room Type Filter (2排/3排/5排) -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-gamepad text-indigo-400"></i> 车队模式
+                        </span>
+                        <div class="flex gap-1.5 text-xs" id="filterTypeGroup">
+                            <button onclick="setFilter('type', 'all', this)"
+                                class="filter-type-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-medium">全部</button>
+                            <button onclick="setFilter('type', '5排', this)"
+                                class="filter-type-btn px-2.5 py-1 rounded-lg bg-vox-card text-slate-400 hover:text-white border border-vox-border">5排</button>
+                            <button onclick="setFilter('type', '3排', this)"
+                                class="filter-type-btn px-2.5 py-1 rounded-lg bg-vox-card text-slate-400 hover:text-white border border-vox-border">3排</button>
+                            <button onclick="setFilter('type', '2排', this)"
+                                class="filter-type-btn px-2.5 py-1 rounded-lg bg-vox-card text-slate-400 hover:text-white border border-vox-border">2排</button>
+                        </div>
+                    </div>
+
+                    <!-- Room Tag Filter (上分/娱乐/练英雄) -->
+                    <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar" id="filterTagGroup">
+                        <button onclick="setFilter('tag', 'all', this)"
+                            class="filter-tag-btn px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0 font-medium">全部标签</button>
+                        <button onclick="setFilter('tag', '冲分上星', this)"
+                            class="filter-tag-btn px-3 py-1 rounded-full bg-vox-card text-slate-400 border border-vox-border shrink-0 hover:text-white">🔥
+                            冲分上星</button>
+                        <button onclick="setFilter('tag', '欢乐娱乐', this)"
+                            class="filter-tag-btn px-3 py-1 rounded-full bg-vox-card text-slate-400 border border-vox-border shrink-0 hover:text-white">✨
+                            欢乐娱乐</button>
+                        <button onclick="setFilter('tag', '练新英雄', this)"
+                            class="filter-tag-btn px-3 py-1 rounded-full bg-vox-card text-slate-400 border border-vox-border shrink-0 hover:text-white">🎯
+                            练新英雄</button>
+                    </div>
+                </div>
+
+                <!-- Room Cards List -->
+                <div class="space-y-3" id="roomCardList">
+                    <!-- Room items injected by JavaScript -->
+                </div>
+
+            </section>
+
+            <!-- ============================================== -->
+            <!-- VIEW 2: VOICE ROOM PAGE (核心语音房)          -->
+            <!-- ============================================== -->
+            <section id="pageRoom" class="hidden p-4 flex flex-col h-full space-y-3">
+
+                <!-- Room Header Card -->
+                <div class="glass-card rounded-2xl p-3.5 space-y-2 border border-vox-border">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                            <h2 class="text-base font-black text-white truncate max-w-[200px]" id="currentRoomTitle">
+                                冲星王者5排速推房</h2>
+                            <span
+                                class="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-semibold shrink-0"
+                                id="currentRoomBadge">5排 • 冲分</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs">
+                            <span class="text-emerald-400 font-mono text-[11px]" id="currentRoomLatency"><i
+                                    class="fa-solid fa-wifi text-[10px]"></i> 18ms</span>
+                            <button onclick="openRoomSettingsModal()" title="房间设置"
+                                class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center transition">
+                                <i class="fa-solid fa-sliders"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Room Meta / Fast Share Row -->
+                    <div class="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-white/5">
+                        <div class="flex items-center gap-2">
+                            <span>房间号: <strong class="text-slate-200 font-mono"
+                                    id="currentRoomNo">SV-9921</strong></span>
+                            <span class="text-slate-600">|</span>
+                            <span id="currentRoomCountTxt">4 / 5 人在线</span>
+                        </div>
+
+                        <button onclick="copyTeamShareText()"
+                            class="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 text-[11px] font-medium bg-cyan-950/40 px-2 py-0.5 rounded-md border border-cyan-800/50 transition">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>复制组队文案</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- OS Background Voice Notice Banner -->
+                <div
+                    class="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-2.5 text-[11px] text-indigo-200 flex items-start gap-2">
+                    <i class="fa-solid fa-shield-halved text-cyan-400 mt-0.5 shrink-0"></i>
+                    <div>
+                        <span class="font-bold text-white">后台语聊保活指南：</span>
+                        <span>切至游戏时iOS麦克风仅可收听；安卓建议在手机后台锁定本小程序并关闭省电策略。</span>
+                    </div>
+                </div>
+
+                <!-- TRTC Voice Stage (车队麦位区) -->
+                <div class="glass-card rounded-2xl p-4 border border-vox-border">
+                    <div class="flex items-center justify-between mb-3 text-xs">
+                        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-users-rays text-indigo-400"></i>
+                            <span>小队麦位席 (TRTC实时声讯)</span>
+                        </span>
+                        <span class="text-[11px] text-slate-400">点击头像可查看资料或管控</span>
+                    </div>
+
+                    <!-- Slots Layout Grid (Dynamic by MaxNum) -->
+                    <div class="grid grid-cols-5 gap-2" id="voiceSlotsContainer">
+                        <!-- Dynamic mic seats injected by JS -->
+                    </div>
+
+                    <!-- Sound Wave Activity Bar Indicator -->
+                    <div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] text-slate-400">当前发言:</span>
+                            <span class="text-xs font-bold text-emerald-400 flex items-center gap-1"
+                                id="currentSpeakerLabel">
+                                <span>野区霸王 (房主)</span>
+                            </span>
+                        </div>
+                        <!-- Equalizer Sound Wave -->
+                        <div class="flex items-end gap-1 h-5 px-2">
+                            <span class="w-1 bg-emerald-400 rounded-full bar-1"></span>
+                            <span class="w-1 bg-emerald-400 rounded-full bar-2"></span>
+                            <span class="w-1 bg-emerald-400 rounded-full bar-3"></span>
+                            <span class="w-1 bg-emerald-400 rounded-full bar-4"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Room Barrage / Chat Area -->
+                <div
+                    class="glass-card rounded-2xl p-3 flex-1 flex flex-col justify-between border border-vox-border overflow-hidden min-h-[160px]">
+                    <!-- Chat list -->
+                    <div class="overflow-y-auto space-y-2 pr-1 text-xs" id="chatMessageList" style="max-height: 140px;">
+                        <div class="text-[11px] text-slate-500 text-center py-1">
+                            - 房间已开启微信内容安全审核，严禁广告、代练与侮辱言论 -
+                        </div>
+                        <div class="flex items-start gap-1.5 text-slate-300">
+                            <span class="px-1.5 py-0.2 rounded bg-indigo-500/30 text-indigo-300 text-[10px]">系统</span>
+                            <span class="text-slate-400">欢迎进入 SquadVox，开麦畅爽沟通！</span>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input & Quick Tactical Phrases -->
+                    <div class="pt-2 border-t border-white/5 space-y-2">
+                        <!-- Quick Chips -->
+                        <div class="flex items-center gap-1.5 overflow-x-auto text-[11px] no-scrollbar py-0.5">
+                            <button onclick="sendQuickChat('我打野带飞，你们稳住！')"
+                                class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 hover:text-white shrink-0 transition">我打野带飞</button>
+                            <button onclick="sendQuickChat('缺个硬辅开团，直接上车！')"
+                                class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 hover:text-white shrink-0 transition">缺个硬辅开团</button>
+                            <button onclick="sendQuickChat('稳住发育，后期接团！')"
+                                class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 hover:text-white shrink-0 transition">稳住后期接团</button>
+                            <button onclick="sendQuickChat('大家能听到我说话吗？')"
+                                class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 hover:text-white shrink-0 transition">测试麦克风</button>
+                        </div>
+
+                        <!-- Input Bar -->
+                        <form onsubmit="handleSendChat(event)" class="flex items-center gap-2">
+                            <input type="text" id="chatInput" placeholder="发弹幕交流 (前置内容安全拦截)..." maxlength="60"
+                                class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition" />
+                            <button type="submit"
+                                class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shrink-0 transition">
+                                发送
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- In-Room Voice Control Bar (Bottom Floating Dock inside Room) -->
+                <div class="glass-card rounded-2xl p-2.5 flex items-center justify-between border border-vox-border">
+                    <div class="flex items-center gap-3">
+                        <!-- Mic Button -->
+                        <button onclick="toggleMyMic()" id="roomMicBtn"
+                            class="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-600/30 transition">
+                            <i class="fa-solid fa-microphone text-sm" id="roomMicIcon"></i>
+                            <span class="text-xs font-bold" id="roomMicTxt">已开麦</span>
+                        </button>
+
+                        <!-- Deafen / Speaker Button -->
+                        <button onclick="toggleMySpeaker()" id="roomSpeakerBtn"
+                            class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 hover:text-white transition">
+                            <i class="fa-solid fa-volume-high text-xs" id="roomSpeakerIcon"></i>
+                            <span class="text-xs font-medium" id="roomSpeakerTxt">扬声器</span>
+                        </button>
+                    </div>
+
+                    <!-- Leave Room Button -->
+                    <button onclick="leaveRoomConfirm()"
+                        class="flex items-center gap-1 px-3 py-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition text-xs font-bold">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span>退出</span>
+                    </button>
+                </div>
+
+            </section>
+
+            <!-- ============================================== -->
+            <!-- VIEW 3: PROFILE PAGE (个人游戏资料)           -->
+            <!-- ============================================== -->
+            <section id="pageProfile" class="hidden p-4 space-y-4">
+
+                <!-- User Wechat Auth Banner -->
+                <div class="glass-card rounded-2xl p-4 border border-vox-border flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="relative cursor-pointer group" onclick="openAvatarSelectorModal()" title="更换微信头像">
+                            <img id="profileAvatar"
+                                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+                                alt="Avatar"
+                                class="w-14 h-14 rounded-2xl object-cover border-2 border-indigo-500/50 shadow-md group-hover:opacity-80 transition" />
+                            <span
+                                class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>
+                            <div
+                                class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white">
+                                换头像</div>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold text-white text-base" id="profileNickname">电竞少年阿策</h3>
+                                <span
+                                    class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">微信已授权</span>
+                            </div>
+                            <p class="text-xs text-slate-400 font-mono mt-0.5" id="profileUid">UID: 88392102</p>
+                        </div>
+                    </div>
+
+                    <button onclick="triggerWechatAuthSwitch()"
+                        class="text-xs text-indigo-400 hover:text-indigo-300 font-medium px-2.5 py-1 rounded bg-slate-800/80 transition">
+                        切换微信
+                    </button>
+                </div>
+
+                <!-- Game Profile Edit Card (Manual Entry) -->
+                <div class="glass-card rounded-2xl p-4 space-y-3.5 border border-vox-border">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-id-card text-indigo-400"></i>
+                            <h4 class="font-bold text-white text-sm">王者专属开黑名片</h4>
+                        </div>
+                        <span class="text-[10px] text-slate-400">车队成员可见</span>
+                    </div>
+
+                    <!-- Form inputs -->
+                    <div class="space-y-3 text-xs">
+                        <!-- Game Region (微信/QQ区) -->
+                        <div>
+                            <label class="block text-slate-400 mb-1">游戏大区</label>
+                            <div class="grid grid-cols-2 gap-2" id="regionSelector">
+                                <button type="button" onclick="selectRegion('微信区')" id="btnRegionWx"
+                                    class="py-2 px-3 rounded-xl border border-indigo-500 bg-indigo-600/20 text-indigo-300 font-bold flex items-center justify-center gap-1.5 transition">
+                                    <i class="fa-brands fa-weixin text-emerald-400"></i> 微信区
+                                </button>
+                                <button type="button" onclick="selectRegion('QQ区')" id="btnRegionQq"
+                                    class="py-2 px-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-400 flex items-center justify-center gap-1.5 transition">
+                                    <i class="fa-brands fa-qq text-sky-400"></i> QQ区
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Server & In-Game ID -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-slate-400 mb-1">游戏服务器</label>
+                                <input type="text" id="inputGameServer" value="手Q12区-王者峡谷"
+                                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 mb-1">王者游戏ID</label>
+                                <input type="text" id="inputGameId" value="策马踏长空"
+                                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+                            </div>
+                        </div>
+
+                        <!-- Rank Selection -->
+                        <div>
+                            <label class="block text-slate-400 mb-1">当前游戏段位</label>
+                            <select id="inputGameRank"
+                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                                <option value="永恒钻石">永恒钻石 (Diamond)</option>
+                                <option value="至尊星耀">至尊星耀 (Master)</option>
+                                <option value="最强王者 1-24星">最强王者 1-24星</option>
+                                <option value="无双王者 25-49星" selected>无双王者 25-49星</option>
+                                <option value="荣耀王者 50-99星">荣耀王者 50-99星</option>
+                                <option value="传奇王者 100星+">传奇王者 100星+</option>
+                            </select>
+                        </div>
+
+                        <!-- Main Positions (多选/单选) -->
+                        <div>
+                            <label class="block text-slate-400 mb-1.5">擅长分路 (至多选两项)</label>
+                            <div class="grid grid-cols-5 gap-1.5" id="positionGroup">
+                                <button type="button" onclick="togglePosition('对抗路', this)"
+                                    class="pos-tag py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-300 text-center font-medium transition">对抗路</button>
+                                <button type="button" onclick="togglePosition('打野', this)"
+                                    class="pos-tag py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-300 text-center font-medium transition">打野</button>
+                                <button type="button" onclick="togglePosition('中路', this)"
+                                    class="pos-tag py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-300 text-center font-medium transition">中路</button>
+                                <button type="button" onclick="togglePosition('发育路', this)"
+                                    class="pos-tag py-1.5 rounded-lg border border-indigo-500 bg-indigo-600/30 text-indigo-300 text-center font-bold transition">发育路</button>
+                                <button type="button" onclick="togglePosition('游走', this)"
+                                    class="pos-tag py-1.5 rounded-lg border border-indigo-500 bg-indigo-600/30 text-indigo-300 text-center font-bold transition">游走</button>
+                            </div>
+                        </div>
+
+                        <!-- Save Info Action Button -->
+                        <button onclick="saveUserProfile()"
+                            class="w-full py-2.5 mt-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-indigo-500/20 active:scale-98 transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>保存个人资料 (/squadvox/api/user/saveInfo)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Compliance & Legal Terms Card -->
+                <div class="glass-card rounded-2xl p-4 space-y-2 border border-vox-border text-xs">
+                    <div class="flex items-center justify-between text-slate-300">
+                        <span class="font-bold flex items-center gap-1.5">
+                            <i class="fa-solid fa-scale-balanced text-indigo-400"></i> 合规与隐私协议
+                        </span>
+                        <button onclick="openPrivacyModal()"
+                            class="text-indigo-400 hover:text-indigo-300 transition">查看全文</button>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        SquadVox 严格遵守微信小程序运营规范。用户资料均由自主登记，本应用不抓取、不爬取游戏数据，实时语音与文字消息均经过内容安全审查拦截。
+                    </p>
+                </div>
+
+                <!-- Version Meta -->
+                <div class="text-center text-[11px] text-slate-500 pt-2">
+                    SquadVox 开黑语聊房 v1.0.0 (Build 20261008)
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Bottom Navigation Bar (TabBar) -->
+        <nav
+            class="glass-nav absolute bottom-0 left-0 right-0 h-16 flex items-center justify-around px-2 z-30 select-none">
+            <!-- Tab 1: Lobby -->
+            <button onclick="switchTab('lobby')" id="tabLobbyBtn"
+                class="flex flex-col items-center justify-center gap-0.5 text-indigo-400 w-16 transition">
+                <i class="fa-solid fa-compass text-lg"></i>
+                <span class="text-[10px] font-bold">开黑大厅</span>
+            </button>
+
+            <!-- Center Plus Button for Create Room -->
+            <button onclick="openCreateRoomModal()"
+                class="-mt-4 w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 via-indigo-600 to-cyan-400 flex items-center justify-center text-slate-950 shadow-lg shadow-indigo-500/40 hover:scale-105 active:scale-95 transition"
+                title="创建车队">
+                <i class="fa-solid fa-plus text-base font-black"></i>
+            </button>
+
+            <!-- Tab 2: Current Room -->
+            <button onclick="switchTab('room')" id="tabRoomBtn"
+                class="flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 w-16 transition relative">
+                <span id="tabRoomBadge"
+                    class="hidden absolute top-0 right-3 w-2 h-2 rounded-full bg-emerald-400"></span>
+                <i class="fa-solid fa-headset text-lg"></i>
+                <span class="text-[10px]">语聊房间</span>
+            </button>
+
+            <!-- Tab 3: Profile -->
+            <button onclick="switchTab('profile')" id="tabProfileBtn"
+                class="flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 w-16 transition">
+                <i class="fa-solid fa-user-ninja text-lg"></i>
+                <span class="text-[10px]">游戏资料</span>
+            </button>
+        </nav>
+
+        <!-- MODAL 0: Avatar Selector Dialog -->
+        <div id="modalAvatarSelect"
+            class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="w-full max-w-xs bg-vox-card rounded-2xl border border-vox-border p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h4 class="font-bold text-white text-sm">选择游戏头像</h4>
+                    <button onclick="closeModal('modalAvatarSelect')" class="text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-slate-400">选择您在开黑房间内展示的头像：</p>
+                <div class="grid grid-cols-4 gap-2.5" id="avatarOptionsContainer">
+                    <!-- Avatars injected dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 1: Create Room Dialog -->
+        <div id="modalCreateRoom"
+            class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4">
+            <div
+                class="w-full max-w-sm bg-vox-card rounded-t-3xl md:rounded-3xl border border-vox-border p-5 space-y-4 shadow-2xl">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                        <h3 class="font-bold text-white text-base">创建开黑语聊房</h3>
+                    </div>
+                    <button onclick="closeModal('modalCreateRoom')" class="text-slate-400 hover:text-white text-sm">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <form onsubmit="handleCreateRoomSubmit(event)" class="space-y-3 text-xs">
+                    <!-- Room Name -->
+                    <div>
+                        <label class="block text-slate-400 mb-1">车队名称</label>
+                        <input type="text" id="createRoomName" required maxlength="20" placeholder="例如: 连胜冲星5排缺打野"
+                            value="来个硬辅直接发车"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+                    </div>
+
+                    <!-- Team Type (2排/3排/5排) -->
+                    <div>
+                        <label class="block text-slate-400 mb-1">车队类型</label>
+                        <div class="grid grid-cols-3 gap-2" id="createTypeGroup">
+                            <button type="button" onclick="selectCreateType('5排', 5, this)"
+                                class="create-type-btn py-2 rounded-xl bg-indigo-600 text-white font-bold border border-indigo-400">5排
+                                (5人)</button>
+                            <button type="button" onclick="selectCreateType('3排', 3, this)"
+                                class="create-type-btn py-2 rounded-xl bg-slate-900 text-slate-400 border border-slate-700">3排
+                                (3人)</button>
+                            <button type="button" onclick="selectCreateType('2排', 2, this)"
+                                class="create-type-btn py-2 rounded-xl bg-slate-900 text-slate-400 border border-slate-700">2排
+                                (2人)</button>
+                        </div>
+                    </div>
+
+                    <!-- Room Tag -->
+                    <div>
+                        <label class="block text-slate-400 mb-1">房间标签</label>
+                        <select id="createRoomTag"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                            <option value="冲分上星">🔥 冲分上星 (求稳求胜)</option>
+                            <option value="欢乐娱乐">✨ 欢乐娱乐 (下饭搞笑)</option>
+                            <option value="练新英雄">🎯 练新英雄 (赏金战力)</option>
+                        </select>
+                    </div>
+
+                    <!-- Room Password (Optional) -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-slate-400">房间密码 (选填)</label>
+                            <span class="text-[10px] text-slate-500">留空则为公开房间</span>
+                        </div>
+                        <input type="password" id="createRoomPwd" maxlength="6" placeholder="4-6位数字密码"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono" />
+                    </div>
+
+                    <button type="submit"
+                        class="w-full py-2.5 mt-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-indigo-500/30 active:scale-98 transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-microphone-lines"></i>
+                        <span>即刻开启语音房 (自动就座房主席)</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL 2: Enter Password Prompt -->
+        <div id="modalEnterPwd"
+            class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="w-full max-w-xs bg-vox-card rounded-2xl border border-vox-border p-5 space-y-4 text-center">
+                <div
+                    class="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto text-xl border border-amber-500/30">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white text-base">此车队已加密</h4>
+                    <p class="text-xs text-slate-400 mt-1" id="pwdRoomPrompt">请输入房主设置的进入密码</p>
+                </div>
+                <input type="password" id="inputEnterPwd" maxlength="6" placeholder="输入密码 (演示默认: 666)"
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-center text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono tracking-widest text-sm" />
+                <div class="flex gap-2">
+                    <button onclick="closeModal('modalEnterPwd')"
+                        class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">取消</button>
+                    <button onclick="submitVerifyPassword()"
+                        class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs">验证进入</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 3: Member Detail & Host Actions Modal -->
+        <div id="modalMemberDetail"
+            class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4">
+            <div
+                class="w-full max-w-xs bg-vox-card rounded-t-3xl md:rounded-3xl border border-vox-border p-5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400">队员详细信息</span>
+                    <button onclick="closeModal('modalMemberDetail')" class="text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Member Profile Preview -->
+                <div class="flex items-center gap-3 bg-slate-900/80 p-3 rounded-2xl border border-white/5">
+                    <img id="detailMemberAvatar" src=""
+                        class="w-12 h-12 rounded-xl object-cover border border-indigo-500/50" />
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <h4 class="font-bold text-white text-sm" id="detailMemberName">王者老司机</h4>
+                            <span id="detailMemberRoleBadge"
+                                class="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300">队员</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5" id="detailMemberRank">至尊星耀 II</p>
+                    </div>
+                </div>
+
+                <div class="text-xs space-y-1 bg-slate-900/40 p-2.5 rounded-xl border border-white/5 text-slate-300">
+                    <div>擅长位置: <span class="text-cyan-300 font-semibold" id="detailMemberPos">对抗路 / 打野</span></div>
+                    <div>游戏大区: <span class="text-slate-200" id="detailMemberArea">微信区 (手Q/微信)</span></div>
+                    <div>麦克风状态: <span class="text-emerald-400" id="detailMemberMic">正常讲话中</span></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-2 space-y-2">
+                    <!-- Host Kick Option (Only if host) -->
+                    <button id="btnKickMember" onclick="handleKickMember()"
+                        class="hidden w-full py-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 text-xs font-bold transition">
+                        <i class="fa-solid fa-user-xmark mr-1"></i> 踢出车队 (房主权限)
+                    </button>
+
+                    <!-- Report Button -->
+                    <button onclick="openReportModal()"
+                        class="w-full py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-amber-400 text-xs transition flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-flag"></i> 举报该玩家违规
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 4: User Report Submission Dialog -->
+        <div id="modalReport"
+            class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="w-full max-w-xs bg-vox-card rounded-2xl border border-vox-border p-5 space-y-3.5 text-xs">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1.5 text-amber-400 font-bold text-sm">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>违规举报提交</span>
+                    </div>
+                    <button onclick="closeModal('modalReport')" class="text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <p class="text-slate-400 text-[11px]">SquadVox 坚决抵制任何侮辱谩骂、低俗违规及代练广告宣传。</p>
+
+                <div>
+                    <label class="block text-slate-300 mb-1">举报类型</label>
+                    <select id="reportTypeSelect"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white">
+                        <option value="语音辱骂/恶意攻击">语音辱骂 / 恶意人身攻击</option>
+                        <option value="代练广告/诈骗引流">代练广告 / 违规引流</option>
+                        <option value="消极挂机/破坏开黑">消极挂机 / 破坏游戏体验</option>
+                        <option value="色情低俗不良言论">涉黄低俗 / 不良言论</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-slate-300 mb-1">详情描述 (选填)</label>
+                    <textarea id="reportDesc" rows="2" placeholder="补充具体违规发生的时间或言论细节..."
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white placeholder-slate-500"></textarea>
+                </div>
+
+                <button onclick="submitUserReport()"
+                    class="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 font-bold text-xs shadow-md">
+                    提交违规审核存档 (/squadvox/api/report/submit)
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL 5: Room Settings / Host Controls -->
+        <div id="modalRoomSettings"
+            class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4">
+            <div
+                class="w-full max-w-xs bg-vox-card rounded-t-3xl md:rounded-3xl border border-vox-border p-5 space-y-3.5 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-white text-sm">房间管控面板</span>
+                    <button onclick="closeModal('modalRoomSettings')" class="text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-2">
+                    <!-- Mute all option -->
+                    <button onclick="toggleMuteAllMembers()" id="btnMuteAll"
+                        class="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 flex items-center justify-between transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-microphone-slash text-amber-400"></i>
+                            <span>房主全员静音</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400" id="muteAllStatus">关</span>
+                    </button>
+
+                    <!-- Audio engine mode info -->
+                    <div
+                        class="p-2.5 rounded-xl bg-slate-900/60 border border-white/5 space-y-1 text-[11px] text-slate-400">
+                        <div class="flex justify-between">
+                            <span>TRTC 编码模式:</span>
+                            <span class="text-cyan-400 font-mono">GameAudio_HighRate</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>端到端延时:</span>
+                            <span class="text-emerald-400 font-mono">18ms ~ 24ms</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>回声消除 (AEC):</span>
+                            <span class="text-emerald-400">已开启</span>
+                        </div>
+                    </div>
+
+                    <!-- Close room option -->
+                    <button onclick="closeRoomAsHost()"
+                        class="w-full py-2.5 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold flex items-center justify-center gap-1.5 transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span>解散并关闭房间 (/squadvox/api/room/close)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 6: Privacy Terms Compliance Modal -->
+        <div id="modalPrivacy"
+            class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div
+                class="w-full max-w-sm bg-vox-card rounded-2xl border border-vox-border p-5 space-y-3 text-xs max-h-[80vh] overflow-y-auto">
+                <h3 class="font-bold text-white text-base">SquadVox 用户协议与隐私保护</h3>
+                <div class="text-slate-300 space-y-2 text-[11px] leading-relaxed">
+                    <p><strong>1. 数据合规承诺：</strong>SquadVox
+                        严格作为第三方游戏组队开黑辅助语音工具，不抓取、不逆向、不篡改《王者荣耀》官方任何底层数据。所有用户段位、分路均由用户自主填报。</p>
+                    <p><strong>2. 内容安全审核：</strong>平台全量接入微信小程序文本内容安全识别接口及腾讯云 TRTC 语音实时监测。对涉及低俗辱骂、广告营销、违规代练账号予以封禁处置。</p>
+                    <p><strong>3. 实时语音与系统后台：</strong>语音功能基于腾讯云实时音视频 TRTC 提供。由于移动端操作系统（如
+                        iOS）后台权限机制，切换到游戏后台时麦克风可能无法持续上行传输，建议使用单向监听或耳机硬件设备。</p>
+                </div>
+                <button onclick="closeModal('modalPrivacy')"
+                    class="w-full py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs mt-2 transition hover:bg-indigo-500">
+                    我已知晓并同意
+                </button>
+            </div>
+        </div>
+
+        <!-- TOAST MESSAGE SYSTEM -->
+        <div id="toast"
+            class="pointer-events-none fixed top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-slate-900/95 text-white border border-indigo-500/40 text-xs shadow-2xl flex items-center gap-2 opacity-0 transition-opacity duration-300">
+            <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+            <span id="toastMsg">操作成功</span>
+        </div>
+
+    </main>
+
+    <!-- Interactive JavaScript Logic -->
+    <script>
+        // Audio FX generator via Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundEnabled = true;
+
+        function playBeep(freq = 440, type = 'sine', duration = 0.1) {
+            if (!soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.warn("Audio Context init pending user gesture.");
+            }
+        }
+
+        function soundMicToggle(open) {
+            if (open) {
+                playBeep(587.33, 'triangle', 0.08);
+                setTimeout(() => playBeep(880, 'triangle', 0.12), 80);
+            } else {
+                playBeep(440, 'sine', 0.1);
+            }
+        }
+
+        function soundJoinRoom() {
+            playBeep(523.25, 'sine', 0.08);
+            setTimeout(() => playBeep(659.25, 'sine', 0.08), 90);
+            setTimeout(() => playBeep(783.99, 'sine', 0.15), 180);
+        }
+
+        // Realistic Game Avatars
+        const avatarList = [
+            "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80"
+        ];
+
+        // Current User Profile State
+        let currentUser = {
+            id: 88392102,
+            nickname: "电竞少年阿策",
+            avatar: avatarList[0],
+            region: "微信区",
+            server: "手Q12区-王者峡谷",
+            gameId: "策马踏长空",
+            rank: "无双王者 25-49星",
+            positions: ["发育路", "游走"],
+            isMicOn: true,
+            isSpeakerOn: true
+        };
+
+        // Filter states for Lobby
+        let currentFilters = {
+            type: 'all', // all, 5排, 3排, 2排
+            tag: 'all'   // all, 冲分上星, 欢乐娱乐, 练新英雄
+        };
+
+        // Mock Active Rooms List with rich Honor of Kings data
+        let roomsData = [
+            {
+                id: 1,
+                roomNo: 'SV-9921',
+                ownerId: 101,
+                ownerName: '野区霸王',
+                ownerRank: '荣耀王者 68星',
+                ownerAvatar: avatarList[1],
+                name: '冲星王者5排速推房',
+                type: '5排',
+                maxNum: 5,
+                tag: '冲分上星',
+                hasPassword: false,
+                password: '',
+                members: [
+                    { id: 101, name: '野区霸王', isHost: true, avatar: avatarList[1], rank: '荣耀王者 68星', position: '打野', isSpeaking: true, micOpen: true },
+                    { id: 102, name: '瑶妹想混分', isHost: false, avatar: avatarList[2], rank: '至尊星耀 I', position: '游走', isSpeaking: false, micOpen: true },
+                    { id: 103, name: '通天边路斩', isHost: false, avatar: avatarList[3], rank: '无双王者 32星', position: '对抗路', isSpeaking: false, micOpen: true },
+                    { id: 104, name: '中路绝不亏兵', isHost: false, avatar: avatarList[4], rank: '最强王者 18星', position: '中路', isSpeaking: false, micOpen: false }
+                ]
+            },
+            {
+                id: 2,
+                roomNo: 'SV-8832',
+                ownerId: 201,
+                ownerName: '下饭老黄瓜',
+                ownerRank: '至尊星耀 III',
+                ownerAvatar: avatarList[5],
+                name: '3排娱乐欢乐局，麦克风开聊',
+                type: '3排',
+                maxNum: 3,
+                tag: '欢乐娱乐',
+                hasPassword: false,
+                password: '',
+                members: [
+                    { id: 201, name: '下饭老黄瓜', isHost: true, avatar: avatarList[5], rank: '至尊星耀 III', position: '中路', isSpeaking: true, micOpen: true },
+                    { id: 202, name: '草丛三剑客', isHost: false, avatar: avatarList[6], rank: '至尊星耀 IV', position: '游走', isSpeaking: false, micOpen: true }
+                ]
+            },
+            {
+                id: 3,
+                roomNo: 'SV-7719',
+                ownerId: 301,
+                ownerName: '国服露娜教学',
+                ownerRank: '传奇王者 102星',
+                ownerAvatar: avatarList[7],
+                name: '高端车队密码房 (私信进)',
+                type: '5排',
+                maxNum: 5,
+                tag: '冲分上星',
+                hasPassword: true,
+                password: '666',
+                members: [
+                    { id: 301, name: '国服露娜教学', isHost: true, avatar: avatarList[7], rank: '传奇王者 102星', position: '打野', isSpeaking: false, micOpen: true },
+                    { id: 302, name: '大射手后羿', isHost: false, avatar: avatarList[2], rank: '荣耀王者 70星', position: '发育路', isSpeaking: false, micOpen: true }
+                ]
+            },
+            {
+                id: 4,
+                roomNo: 'SV-6601',
+                ownerId: 401,
+                ownerName: '练习生小阿朵',
+                ownerRank: '永恒钻石 I',
+                ownerAvatar: avatarList[2],
+                name: '情侣2排/新英雄熟练度练习',
+                type: '2排',
+                maxNum: 2,
+                tag: '练新英雄',
+                hasPassword: false,
+                password: '',
+                members: [
+                    { id: 401, name: '练习生小阿朵', isHost: true, avatar: avatarList[2], rank: '永恒钻石 I', position: '对抗路', isSpeaking: true, micOpen: true }
+                ]
+            },
+            {
+                id: 5,
+                roomNo: 'SV-5520',
+                ownerId: 501,
+                ownerName: '巅峰赛狙击手',
+                ownerRank: '荣耀王者 55星',
+                ownerAvatar: avatarList[3],
+                name: '微信区5排来个抗压肉边',
+                type: '5排',
+                maxNum: 5,
+                tag: '冲分上星',
+                hasPassword: false,
+                password: '',
+                members: [
+                    { id: 501, name: '巅峰赛狙击手', isHost: true, avatar: avatarList[3], rank: '荣耀王者 55星', position: '打野', isSpeaking: false, micOpen: true },
+                    { id: 502, name: '不知火舞本火', isHost: false, avatar: avatarList[4], rank: '无双王者 39星', position: '中路', isSpeaking: false, micOpen: true },
+                    { id: 503, name: '孙尚香暴击流', isHost: false, avatar: avatarList[0], rank: '荣耀王者 61星', position: '发育路', isSpeaking: true, micOpen: true }
+                ]
+            }
+        ];
+
+        let activeRoom = null;
+        let pendingPasswordRoom = null;
+        let selectedMemberForDetail = null;
+        let isAllMutedByHost = false;
+
+        function switchTab(tabId) {
+            const views = ['pageLobby', 'pageRoom', 'pageProfile'];
+            views.forEach(v => document.getElementById(v).classList.add('hidden'));
+
+            const tabBtns = {
+                lobby: document.getElementById('tabLobbyBtn'),
+                room: document.getElementById('tabRoomBtn'),
+                profile: document.getElementById('tabProfileBtn')
+            };
+
+            Object.values(tabBtns).forEach(btn => {
+                btn.classList.remove('text-indigo-400');
+                btn.classList.add('text-slate-400');
+                btn.querySelector('span').classList.remove('font-bold');
+            });
+
+            if (tabId === 'lobby') {
+                document.getElementById('pageLobby').classList.remove('hidden');
+                tabBtns.lobby.classList.add('text-indigo-400');
+                tabBtns.lobby.querySelector('span').classList.add('font-bold');
+                document.getElementById('topBarTitle').textContent = 'SquadVox 开黑大厅';
+                renderRoomCards();
+            } else if (tabId === 'room') {
+                if (!activeRoom) {
+                    showToast('您当前尚未加入车队房间，请先选择车队', 'info');
+                    switchTab('lobby');
+                    return;
+                }
+                document.getElementById('pageRoom').classList.remove('hidden');
+                tabBtns.room.classList.add('text-indigo-400');
+                tabBtns.room.querySelector('span').classList.add('font-bold');
+                document.getElementById('topBarTitle').textContent = activeRoom.name;
+                renderVoiceStage();
+            } else if (tabId === 'profile') {
+                document.getElementById('pageProfile').classList.remove('hidden');
+                tabBtns.profile.classList.add('text-indigo-400');
+                tabBtns.profile.querySelector('span').classList.add('font-bold');
+                document.getElementById('topBarTitle').textContent = '个人游戏名片';
+            }
+
+            updateMinimizedWidget();
+        }
+
+        function updateMinimizedWidget() {
+            const widget = document.getElementById('minimizedVoiceBar');
+            const isLobbyOrProfile = !document.getElementById('pageLobby').classList.contains('hidden') ||
+                !document.getElementById('pageProfile').classList.contains('hidden');
+
+            if (activeRoom && isLobbyOrProfile) {
+                widget.classList.remove('hidden');
+                document.getElementById('minimizedRoomName').textContent = activeRoom.name;
+                document.getElementById('minimizedRoomCount').textContent = `${activeRoom.members.length}人房间`;
+                document.getElementById('tabRoomBadge').classList.remove('hidden');
+            } else {
+                widget.classList.add('hidden');
+            }
+        }
+
+        function renderRoomCards() {
+            const container = document.getElementById('roomCardList');
+            container.innerHTML = '';
+
+            const filtered = roomsData.filter(room => {
+                const matchType = currentFilters.type === 'all' || room.type === currentFilters.type;
+                const matchTag = currentFilters.tag === 'all' || room.tag === currentFilters.tag;
+                return matchType && matchTag;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+          <div class="text-center py-10 text-slate-500 text-xs">
+            <i class="fa-solid fa-gamepad text-2xl mb-2 text-slate-600"></i>
+            <p>暂无符合筛选条件的开黑房间</p>
+            <button onclick="openCreateRoomModal()" class="mt-3 px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium">创建第一个车队</button>
+          </div>
+        `;
+                return;
+            }
+
+            filtered.forEach(room => {
+                const isFull = room.members.length >= room.maxNum;
+                const isCurrent = activeRoom && activeRoom.id === room.id;
+
+                const card = document.createElement('div');
+                card.className = `glass-card rounded-2xl p-3.5 border ${isCurrent ? 'border-indigo-500 glow-accent' : 'border-vox-border'} hover:border-slate-600 transition space-y-2.5`;
+
+                card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="relative">
+                <img src="${room.ownerAvatar}" class="w-10 h-10 rounded-xl object-cover border border-white/10" />
+                ${room.members.some(m => m.isSpeaking) ? '<span class="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-900 animate-ping"></span>' : ''}
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h3 class="font-bold text-white text-xs tracking-wide">${room.name}</h3>
+                  ${room.hasPassword ? '<i class="fa-solid fa-lock text-[10px] text-amber-400"></i>' : ''}
+                </div>
+                <div class="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                  <span>房主: <strong class="text-slate-300">${room.ownerName}</strong></span>
+                  <span class="text-slate-600">•</span>
+                  <span class="text-indigo-300 font-semibold">${room.ownerRank}</span>
+                </div>
+              </div>
+            </div>
+
+            <span class="text-[10px] px-2 py-0.5 rounded-md ${room.tag === '冲分上星' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : (room.tag === '欢乐娱乐' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40')} font-semibold">
+              ${room.tag}
+            </span>
+          </div>
+
+          <!-- Bottom bar of Card: Member count, Type & Join action -->
+          <div class="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+            <div class="flex items-center gap-2 text-slate-400">
+              <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold text-[10px]">${room.type}</span>
+              <span class="text-[11px] flex items-center gap-1">
+                <i class="fa-solid fa-users text-[10px]"></i>
+                <strong class="${isFull ? 'text-rose-400' : 'text-emerald-400'}">${room.members.length}</strong> / ${room.maxNum} 人
+              </span>
+              <span class="text-[10px] text-emerald-400 font-mono"><i class="fa-solid fa-bolt text-[9px]"></i> 19ms</span>
+            </div>
+
+            <div>
+              ${isCurrent ? `
+                <button onclick="switchTab('room')" class="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition">
+                  当前房间
+                </button>
+              ` : `
+                <button onclick="requestEnterRoom(${room.id})" ${isFull ? 'disabled' : ''} class="px-3.5 py-1 rounded-xl ${isFull ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold active:scale-95 shadow-md shadow-indigo-500/20'} text-xs transition">
+                  ${isFull ? '车队已满' : '上车入麦'}
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function setFilter(category, val, btnEl) {
+            currentFilters[category] = val;
+
+            if (category === 'type') {
+                document.querySelectorAll('.filter-type-btn').forEach(b => {
+                    b.className = 'filter-type-btn px-2.5 py-1 rounded-lg bg-vox-card text-slate-400 hover:text-white border border-vox-border';
+                });
+                btnEl.className = 'filter-type-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-medium';
+            } else {
+                document.querySelectorAll('.filter-tag-btn').forEach(b => {
+                    b.className = 'filter-tag-btn px-3 py-1 rounded-full bg-vox-card text-slate-400 border border-vox-border shrink-0 hover:text-white';
+                });
+                btnEl.className = 'filter-tag-btn px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0 font-medium';
+            }
+
+            renderRoomCards();
+        }
+
+        function requestEnterRoom(roomId) {
+            const room = roomsData.find(r => r.id === roomId);
+            if (!room) return;
+
+            if (room.members.length >= room.maxNum) {
+                showToast('车队人员已满，无法加入', 'warn');
+                return;
+            }
+
+            if (room.hasPassword) {
+                pendingPasswordRoom = room;
+                document.getElementById('pwdRoomPrompt').textContent = `房间 [${room.name}] 设置了访问密码 (默认: ${room.password})`;
+                document.getElementById('inputEnterPwd').value = '';
+                openModal('modalEnterPwd');
+                return;
+            }
+
+            executeJoinRoom(room);
+        }
+
+        function submitVerifyPassword() {
+            const input = document.getElementById('inputEnterPwd').value.trim();
+            if (!pendingPasswordRoom) return;
+
+            if (input === pendingPasswordRoom.password) {
+                closeModal('modalEnterPwd');
+                executeJoinRoom(pendingPasswordRoom);
+                pendingPasswordRoom = null;
+            } else {
+                showToast('密码校验失败，请重新输入', 'error');
+            }
+        }
+
+        function executeJoinRoom(room) {
+            // Leave existing room if any
+            if (activeRoom && activeRoom.id !== room.id) {
+                activeRoom.members = activeRoom.members.filter(m => m.id !== currentUser.id);
+            }
+
+            activeRoom = room;
+
+            // Add currentUser if not exists
+            const alreadyIn = room.members.some(m => m.id === currentUser.id);
+            if (!alreadyIn) {
+                room.members.push({
+                    id: currentUser.id,
+                    name: currentUser.nickname,
+                    isHost: false,
+                    avatar: currentUser.avatar,
+                    rank: currentUser.rank,
+                    position: currentUser.positions[0] || '发育路',
+                    isSpeaking: false,
+                    micOpen: currentUser.isMicOn
+                });
+            }
+
+            soundJoinRoom();
+            showToast(`已连入语音房: ${room.name}`, 'success');
+
+            // Update room page info
+            document.getElementById('currentRoomTitle').textContent = room.name;
+            document.getElementById('currentRoomNo').textContent = room.roomNo;
+            document.getElementById('currentRoomBadge').textContent = `${room.type} • ${room.tag}`;
+            document.getElementById('currentRoomCountTxt').textContent = `${room.members.length} / ${room.maxNum} 人在线`;
+
+            appendSystemChat(`你已加入房间，TRTC实时语音通道建立成功 (延时: 18ms)`);
+
+            switchTab('room');
+        }
+
+        function renderVoiceStage() {
+            if (!activeRoom) return;
+
+            const container = document.getElementById('voiceSlotsContainer');
+            container.innerHTML = '';
+
+            const totalSlots = activeRoom.maxNum;
+
+            // Adjust grid columns dynamically based on maxNum
+            if (totalSlots === 2) {
+                container.className = 'grid grid-cols-2 gap-4 max-w-[200px] mx-auto';
+            } else if (totalSlots === 3) {
+                container.className = 'grid grid-cols-3 gap-3 max-w-[260px] mx-auto';
+            } else {
+                container.className = 'grid grid-cols-5 gap-2';
+            }
+
+            for (let i = 0; i < totalSlots; i++) {
+                const member = activeRoom.members[i];
+                const slotEl = document.createElement('div');
+                slotEl.className = 'flex flex-col items-center justify-center space-y-1.5';
+
+                if (member) {
+                    const isMe = member.id === currentUser.id;
+                    const isSpeaking = member.isSpeaking && member.micOpen && !isAllMutedByHost;
+
+                    slotEl.innerHTML = `
+            <div class="relative cursor-pointer group" onclick="openMemberDetailModal(${member.id})">
+              <!-- Avatar Circle -->
+              <div class="w-12 h-12 rounded-2xl overflow-hidden border-2 transition ${isSpeaking ? 'voice-active border-emerald-400' : (member.isHost ? 'border-amber-400/80' : 'border-slate-700')}">
+                <img src="${member.avatar}" class="w-full h-full object-cover group-hover:scale-105 transition" />
+              </div>
+
+              <!-- Host Crown or Position Badge -->
+              ${member.isHost ? `
+                <span class="absolute -top-2 -right-1 bg-amber-500 text-slate-950 text-[9px] font-black px-1 rounded-full shadow">房主</span>
+              ` : `
+                <span class="absolute -bottom-1 -left-1 bg-indigo-600 text-white text-[9px] font-bold px-1 rounded shadow">${member.position.slice(0, 2)}</span>
+              `}
+
+              <!-- Mic Status indicator -->
+              <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] ${member.micOpen && !isAllMutedByHost ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-rose-400 border border-rose-500/40'}">
+                <i class="fa-solid ${member.micOpen && !isAllMutedByHost ? 'fa-microphone' : 'fa-microphone-slash'}"></i>
+              </span>
+            </div>
+
+            <div class="text-center w-full px-0.5">
+              <p class="text-[11px] font-semibold text-white truncate max-w-[60px]">${isMe ? '我' : member.name}</p>
+              <p class="text-[9px] text-slate-400 truncate">${member.rank.split(' ')[0]}</p>
+            </div>
+          `;
+                } else {
+                    // Empty Slot
+                    slotEl.innerHTML = `
+            <button onclick="copyTeamShareText()" class="w-12 h-12 rounded-2xl border-2 border-dashed border-slate-700 bg-slate-900/60 hover:border-indigo-500/80 flex flex-col items-center justify-center text-slate-500 hover:text-indigo-400 transition group">
+              <i class="fa-solid fa-plus text-xs group-hover:scale-110 transition"></i>
+            </button>
+            <div class="text-center">
+              <p class="text-[10px] text-slate-500 font-medium">空位</p>
+              <p class="text-[9px] text-slate-600">邀请</p>
+            </div>
+          `;
+                }
+
+                container.appendChild(slotEl);
+            }
+
+            // Update speaker label
+            const activeSpeaker = activeRoom.members.find(m => m.isSpeaking && m.micOpen && !isAllMutedByHost);
+            const label = document.getElementById('currentSpeakerLabel');
+            if (activeSpeaker) {
+                label.innerHTML = `<span class="text-emerald-400 font-bold">${activeSpeaker.name} (${activeSpeaker.isHost ? '房主' : activeSpeaker.position})</span>`;
+            } else {
+                label.innerHTML = `<span class="text-slate-500">等待队友开麦...</span>`;
+            }
+
+            // Update room header count
+            document.getElementById('currentRoomCountTxt').textContent = `${activeRoom.members.length} / ${activeRoom.maxNum} 人在线`;
+        }
+
+        function toggleMyMic() {
+            currentUser.isMicOn = !currentUser.isMicOn;
+            soundMicToggle(currentUser.isMicOn);
+
+            if (activeRoom) {
+                const mySlot = activeRoom.members.find(m => m.id === currentUser.id);
+                if (mySlot) mySlot.micOpen = currentUser.isMicOn;
+            }
+
+            const btn = document.getElementById('roomMicBtn');
+            const icon = document.getElementById('roomMicIcon');
+            const txt = document.getElementById('roomMicTxt');
+            const floatBtn = document.getElementById('floatingMicBtn');
+
+            if (currentUser.isMicOn) {
+                btn.className = 'flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-600/30 transition';
+                icon.className = 'fa-solid fa-microphone text-sm';
+                txt.textContent = '已开麦';
+                floatBtn.className = 'w-8 h-8 rounded-full bg-slate-800 text-emerald-400 hover:bg-slate-700 flex items-center justify-center text-xs transition';
+                floatBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                showToast('麦克风已开启 (TRTC语音上行中)', 'success');
+            } else {
+                btn.className = 'flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-600/20 text-rose-400 border border-rose-500/40 hover:bg-rose-600/30 transition';
+                icon.className = 'fa-solid fa-microphone-slash text-sm';
+                txt.textContent = '已静音';
+                floatBtn.className = 'w-8 h-8 rounded-full bg-slate-800 text-rose-400 hover:bg-slate-700 flex items-center justify-center text-xs transition';
+                floatBtn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
+                showToast('麦克风已闭麦', 'info');
+            }
+
+            renderVoiceStage();
+        }
+
+        function toggleGlobalMic() {
+            toggleMyMic();
+        }
+
+        function toggleMySpeaker() {
+            currentUser.isSpeakerOn = !currentUser.isSpeakerOn;
+            playBeep(400, 'sine', 0.08);
+
+            const icon = document.getElementById('roomSpeakerIcon');
+            const txt = document.getElementById('roomSpeakerTxt');
+
+            if (currentUser.isSpeakerOn) {
+                icon.className = 'fa-solid fa-volume-high text-xs';
+                txt.textContent = '扬声器';
+                showToast('已开启队友语音收听', 'info');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-xs text-rose-400';
+                txt.textContent = '已静音';
+                showToast('已关闭全员语音接收', 'warn');
+            }
+        }
+
+        function leaveRoomConfirm() {
+            if (!activeRoom) return;
+
+            const isHost = activeRoom.ownerId === currentUser.id;
+            const roomTitle = activeRoom.name;
+
+            activeRoom.members = activeRoom.members.filter(m => m.id !== currentUser.id);
+
+            if (isHost && activeRoom.members.length === 0) {
+                roomsData = roomsData.filter(r => r.id !== activeRoom.id);
+            }
+
+            activeRoom = null;
+            document.getElementById('tabRoomBadge').classList.add('hidden');
+            showToast(`已退出房间: ${roomTitle}`, 'info');
+            switchTab('lobby');
+        }
+
+        function copyTeamShareText() {
+            if (!activeRoom) return;
+            const pwdInfo = activeRoom.hasPassword ? `（房间密码：${activeRoom.password}）` : '（公开直连）';
+            const shareStr = `【SquadVox 车队邀约】\n房间名：${activeRoom.name}\n房间号：${activeRoom.roomNo} ${pwdInfo}\n模式：王者荣耀 ${activeRoom.type}（${activeRoom.tag}）\n已有 ${activeRoom.members.length}/${activeRoom.maxNum} 人，速来开黑连麦！\n微信小程序搜索 "SquadVox" 输入房间号即刻进房！`;
+
+            const input = document.createElement('textarea');
+            input.value = shareStr;
+            document.body.appendChild(input);
+            input.select();
+            try {
+                document.execCommand('copy');
+                showToast('组队文案已复制，可直接发微信群邀请好友！', 'success');
+            } catch (err) {
+                showToast('复制失败，请手动长按复制', 'warn');
+            }
+            document.body.removeChild(input);
+        }
+
+        function openMemberDetailModal(memberId) {
+            if (!activeRoom) return;
+            const member = activeRoom.members.find(m => m.id === memberId);
+            if (!member) return;
+
+            selectedMemberForDetail = member;
+
+            document.getElementById('detailMemberName').textContent = member.name;
+            document.getElementById('detailMemberAvatar').src = member.avatar;
+            document.getElementById('detailMemberRank').textContent = member.rank;
+            document.getElementById('detailMemberPos').textContent = member.position;
+            document.getElementById('detailMemberArea').textContent = currentUser.region;
+            document.getElementById('detailMemberRoleBadge').textContent = member.isHost ? '房主' : '队员';
+            document.getElementById('detailMemberMic').textContent = member.micOpen ? '麦克风正常' : '已闭麦';
+
+            const isMeHost = activeRoom.ownerId === currentUser.id;
+            const kickBtn = document.getElementById('btnKickMember');
+
+            if (isMeHost && member.id !== currentUser.id) {
+                kickBtn.classList.remove('hidden');
+            } else {
+                kickBtn.classList.add('hidden');
+            }
+
+            openModal('modalMemberDetail');
+        }
+
+        function handleKickMember() {
+            if (!activeRoom || !selectedMemberForDetail) return;
+            const targetName = selectedMemberForDetail.name;
+            const targetId = selectedMemberForDetail.id;
+
+            activeRoom.members = activeRoom.members.filter(m => m.id !== targetId);
+            closeModal('modalMemberDetail');
+
+            appendSystemChat(`房主已将 [${targetName}] 移出房间`);
+            showToast(`已踢出队员: ${targetName}`, 'info');
+            renderVoiceStage();
+        }
+
+        function openReportModal() {
+            closeModal('modalMemberDetail');
+            openModal('modalReport');
+        }
+
+        function submitUserReport() {
+            const type = document.getElementById('reportTypeSelect').value;
+            closeModal('modalReport');
+            showToast('举报已提交至腾讯云安全与平台客服审核备案', 'success');
+            appendSystemChat(`已成功对违规行为发起举报 (${type})`);
+        }
+
+        function openRoomSettingsModal() {
+            openModal('modalRoomSettings');
+        }
+
+        function toggleMuteAllMembers() {
+            isAllMutedByHost = !isAllMutedByHost;
+            const statusText = document.getElementById('muteAllStatus');
+
+            if (isAllMutedByHost) {
+                statusText.textContent = '开启中 (全员禁麦)';
+                statusText.className = 'text-[10px] text-amber-400 font-bold';
+                appendSystemChat('房主开启了全员静音模式');
+                showToast('已设置全员禁麦', 'warn');
+            } else {
+                statusText.textContent = '关';
+                statusText.className = 'text-[10px] text-slate-400';
+                appendSystemChat('房主解除了全员静音');
+                showToast('已恢复自由麦克风', 'success');
+            }
+            renderVoiceStage();
+        }
+
+        function closeRoomAsHost() {
+            if (!activeRoom) return;
+            const rId = activeRoom.id;
+            closeModal('modalRoomSettings');
+
+            roomsData = roomsData.filter(r => r.id !== rId);
+            activeRoom = null;
+            document.getElementById('tabRoomBadge').classList.add('hidden');
+            showToast('房间已解散，释放 TRTC 资源与服务器缓存', 'info');
+            switchTab('lobby');
+        }
+
+        let selectedCreateType = '5排';
+        let selectedMaxNum = 5;
+
+        function openCreateRoomModal() {
+            openModal('modalCreateRoom');
+        }
+
+        function selectCreateType(type, maxNum, btnEl) {
+            selectedCreateType = type;
+            selectedMaxNum = maxNum;
+
+            document.querySelectorAll('.create-type-btn').forEach(b => {
+                b.className = 'create-type-btn py-2 rounded-xl bg-slate-900 text-slate-400 border border-slate-700';
+            });
+
+            btnEl.className = 'create-type-btn py-2 rounded-xl bg-indigo-600 text-white font-bold border border-indigo-400';
+        }
+
+        function handleCreateRoomSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('createRoomName').value.trim() || '我的王者开黑车队';
+            const tag = document.getElementById('createRoomTag').value;
+            const pwd = document.getElementById('createRoomPwd').value.trim();
+
+            const newRoom = {
+                id: Date.now(),
+                roomNo: 'SV-' + Math.floor(1000 + Math.random() * 9000),
+                ownerId: currentUser.id,
+                ownerName: currentUser.nickname,
+                ownerRank: currentUser.rank,
+                ownerAvatar: currentUser.avatar,
+                name: name,
+                type: selectedCreateType,
+                maxNum: selectedMaxNum,
+                tag: tag,
+                hasPassword: !!pwd,
+                password: pwd,
+                members: [
+                    {
+                        id: currentUser.id,
+                        name: currentUser.nickname,
+                        isHost: true,
+                        avatar: currentUser.avatar,
+                        rank: currentUser.rank,
+                        position: currentUser.positions[0] || '对抗路',
+                        isSpeaking: false,
+                        micOpen: currentUser.isMicOn
+                    }
+                ]
+            };
+
+            roomsData.unshift(newRoom);
+            closeModal('modalCreateRoom');
+
+            executeJoinRoom(newRoom);
+            showToast('房间创建成功，您已自动就座房主席！', 'success');
+        }
+
+        const SENSITIVE_WORDS = ['代练', '加微', '外挂', '透视', '操你', '弱智', '垃圾队友', '刷单', '淘宝'];
+
+        function handleSendChat(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const foundBlocked = SENSITIVE_WORDS.some(w => text.includes(w));
+            if (foundBlocked) {
+                showToast('内容安全校验拦截：消息含敏感、违规或引流广告词！', 'error');
+                return;
+            }
+
+            appendUserChat(currentUser.nickname, text);
+            input.value = '';
+        }
+
+        function sendQuickChat(phrase) {
+            appendUserChat(currentUser.nickname, phrase);
+        }
+
+        function appendUserChat(sender, text) {
+            const list = document.getElementById('chatMessageList');
+            const item = document.createElement('div');
+            item.className = 'flex items-start gap-1.5 text-slate-200 text-xs';
+            item.innerHTML = `
+        <span class="font-bold text-cyan-400 shrink-0">${sender}:</span>
+        <span class="break-all">${escapeHtml(text)}</span>
+      `;
+            list.appendChild(item);
+            list.scrollTop = list.scrollHeight;
+        }
+
+        function appendSystemChat(text) {
+            const list = document.getElementById('chatMessageList');
+            const item = document.createElement('div');
+            item.className = 'flex items-start gap-1.5 text-xs text-indigo-300';
+            item.innerHTML = `
+        <span class="px-1.5 py-0.2 rounded bg-indigo-500/30 text-indigo-300 text-[10px] shrink-0">系统</span>
+        <span>${escapeHtml(text)}</span>
+      `;
+            list.appendChild(item);
+            list.scrollTop = list.scrollHeight;
+        }
+
+        function escapeHtml(string) {
+            return String(string).replace(/[&<>"']/g, function (s) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s];
+            });
+        }
+
+        function selectRegion(regionName) {
+            currentUser.region = regionName;
+            const btnWx = document.getElementById('btnRegionWx');
+            const btnQq = document.getElementById('btnRegionQq');
+
+            if (regionName === '微信区') {
+                btnWx.className = 'py-2 px-3 rounded-xl border border-indigo-500 bg-indigo-600/20 text-indigo-300 font-bold flex items-center justify-center gap-1.5 transition';
+                btnQq.className = 'py-2 px-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-400 flex items-center justify-center gap-1.5 transition';
+            } else {
+                btnQq.className = 'py-2 px-3 rounded-xl border border-indigo-500 bg-indigo-600/20 text-indigo-300 font-bold flex items-center justify-center gap-1.5 transition';
+                btnWx.className = 'py-2 px-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-400 flex items-center justify-center gap-1.5 transition';
+            }
+        }
+
+        function togglePosition(posName, btnEl) {
+            const idx = currentUser.positions.indexOf(posName);
+            if (idx > -1) {
+                if (currentUser.positions.length <= 1) {
+                    showToast('至少保留一项擅长分路', 'warn');
+                    return;
+                }
+                currentUser.positions.splice(idx, 1);
+                btnEl.className = 'pos-tag py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-300 text-center font-medium transition';
+            } else {
+                if (currentUser.positions.length >= 2) {
+                    showToast('擅长分路至多选择 2 项', 'warn');
+                    return;
+                }
+                currentUser.positions.push(posName);
+                btnEl.className = 'pos-tag py-1.5 rounded-lg border border-indigo-500 bg-indigo-600/30 text-indigo-300 text-center font-bold transition';
+            }
+        }
+
+        function saveUserProfile() {
+            currentUser.server = document.getElementById('inputGameServer').value.trim();
+            currentUser.gameId = document.getElementById('inputGameId').value.trim();
+            currentUser.rank = document.getElementById('inputGameRank').value;
+
+            document.getElementById('lobbyMyRank').textContent = currentUser.rank;
+            document.getElementById('lobbyMyPos').textContent = currentUser.positions.join(' / ');
+
+            // If currently inside active room, sync info
+            if (activeRoom) {
+                const meInRoom = activeRoom.members.find(m => m.id === currentUser.id);
+                if (meInRoom) {
+                    meInRoom.rank = currentUser.rank;
+                    meInRoom.position = currentUser.positions[0];
+                    renderVoiceStage();
+                }
+            }
+
+            showToast('个人游戏名片保存成功 (/squadvox/api/user/saveInfo)', 'success');
+        }
+
+        function openAvatarSelectorModal() {
+            const container = document.getElementById('avatarOptionsContainer');
+            container.innerHTML = '';
+            avatarList.forEach((url, i) => {
+                const isCurrent = currentUser.avatar === url;
+                const opt = document.createElement('div');
+                opt.className = `w-14 h-14 rounded-xl overflow-hidden border-2 cursor-pointer transition ${isCurrent ? 'border-cyan-400 scale-105' : 'border-slate-700 hover:border-indigo-400'}`;
+                opt.innerHTML = `<img src="${url}" class="w-full h-full object-cover" />`;
+                opt.onclick = () => selectAvatar(url);
+                container.appendChild(opt);
+            });
+            openModal('modalAvatarSelect');
+        }
+
+        function selectAvatar(url) {
+            currentUser.avatar = url;
+            document.getElementById('profileAvatar').src = url;
+            if (activeRoom) {
+                const me = activeRoom.members.find(m => m.id === currentUser.id);
+                if (me) me.avatar = url;
+                renderVoiceStage();
+            }
+            closeModal('modalAvatarSelect');
+            showToast('头像更新成功', 'success');
+        }
+
+        function triggerWechatAuthSwitch() {
+            // Toggle to an alternate mock WeChat account
+            if (currentUser.id === 88392102) {
+                currentUser.id = 99881100;
+                currentUser.nickname = "野王带你飞";
+                currentUser.avatar = avatarList[3];
+                document.getElementById('profileNickname').textContent = "野王带你飞";
+                document.getElementById('profileUid').textContent = "UID: 99881100";
+                document.getElementById('profileAvatar').src = avatarList[3];
+                showToast('已切换至微信账号：野王带你飞', 'success');
+            } else {
+                currentUser.id = 88392102;
+                currentUser.nickname = "电竞少年阿策";
+                currentUser.avatar = avatarList[0];
+                document.getElementById('profileNickname').textContent = "电竞少年阿策";
+                document.getElementById('profileUid').textContent = "UID: 88392102";
+                document.getElementById('profileAvatar').src = avatarList[0];
+                showToast('已切换至微信账号：电竞少年阿策', 'success');
+            }
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function openPrivacyModal() {
+            openModal('modalPrivacy');
+        }
+
+        let toastTimer = null;
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.textContent = msg;
+
+            if (type === 'success') {
+                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400';
+            } else if (type === 'warn') {
+                toastIcon.className = 'fa-solid fa-circle-exclamation text-amber-400';
+            } else if (type === 'error') {
+                toastIcon.className = 'fa-solid fa-circle-xmark text-rose-400';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-info text-cyan-400';
+            }
+
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2500);
+        }
+
+        function toggleAudioPreviewSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundFxBtn');
+            if (soundEnabled) {
+                btn.innerHTML = '<i class="fa-solid fa-volume-high text-indigo-400"></i><span>交互音效: 开</span>';
+                playBeep(600, 'sine', 0.1);
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark text-slate-500"></i><span>交互音效: 关</span>';
+            }
+        }
+
+        let isFullScreenMobile = false;
+        function toggleDeviceView() {
+            const container = document.getElementById('appContainer');
+            const text = document.getElementById('viewModeText');
+            isFullScreenMobile = !isFullScreenMobile;
+
+            if (isFullScreenMobile) {
+                container.classList.remove('md:w-[414px]', 'md:h-[844px]', 'md:rounded-[42px]', 'md:border-[10px]');
+                container.classList.add('w-full', 'h-screen');
+                text.textContent = '恢复手机外框模式';
+            } else {
+                container.classList.add('md:w-[414px]', 'md:h-[844px]', 'md:rounded-[42px]', 'md:border-[10px]');
+                container.classList.remove('w-full', 'h-screen');
+                text.textContent = '切换全屏模式';
+            }
+        }
+
+        function openMiniProgramMenu() {
+            showToast('微信小程序菜单：已开启关于 SquadVox 及分享', 'info');
+        }
+
+        function minimizeMock() {
+            showToast('模拟点击返回，当前语聊在后台静默运行中', 'info');
+        }
+
+        setInterval(() => {
+            if (activeRoom) {
+                // Randomly simulate teammate speaking activity
+                activeRoom.members.forEach(member => {
+                    if (member.id !== currentUser.id && member.micOpen && !isAllMutedByHost) {
+                        if (Math.random() > 0.65) {
+                            member.isSpeaking = !member.isSpeaking;
+                        }
+                    }
+                });
+
+                // Randomly simulate slight latency fluctuations for TRTC realism
+                const latencyEl = document.getElementById('currentRoomLatency');
+                if (latencyEl) {
+                    const lat = Math.floor(16 + Math.random() * 8);
+                    latencyEl.innerHTML = `<i class="fa-solid fa-wifi text-[10px]"></i> ${lat}ms`;
+                }
+
+                // If voice page is visible, update
+                if (!document.getElementById('pageRoom').classList.contains('hidden')) {
+                    renderVoiceStage();
+                }
+            }
+        }, 2400);
+
+        // Update time in status bar
+        setInterval(() => {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('mockClock').textContent = `${h}:${m}`;
+        }, 1000);
+
+        // Initial render on page load
+        window.onload = function () {
+            renderRoomCards();
+        };
+    </script>
+</body>
+
+</html>
