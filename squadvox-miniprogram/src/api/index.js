@@ -4,6 +4,10 @@ import { request } from '../utils/request';
 export const login = (data) => request({ url: '/user/login', method: 'POST', data });
 export const saveInfo = (data) => request({ url: '/user/saveInfo', method: 'POST', data });
 export const getInfo = () => request({ url: '/user/getInfo', method: 'GET' });
+// 随机生成一套王者荣耀风格的开黑名片（昵称 + 头像）
+export const randomProfile = () => request({ url: '/user/randomProfile', method: 'POST' });
+// 微信头像上传：把 chooseAvatar 拿到的临时文件内容回传服务器持久化
+export const uploadAvatar = (data) => request({ url: '/user/uploadAvatar', method: 'POST', data });
 
 // Room APIs
 export const createRoom = (data) => request({ url: '/room/create', method: 'POST', data });

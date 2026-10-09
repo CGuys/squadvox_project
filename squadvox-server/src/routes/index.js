@@ -13,6 +13,8 @@ const reportController = require('../controllers/reportController');
 router.post('/user/login', userController.login);
 router.post('/user/saveInfo', authMiddleware, userController.saveInfo);
 router.get('/user/getInfo', authMiddleware, userController.getInfo);
+router.post('/user/randomProfile', authMiddleware, userController.randomProfile);
+router.post('/user/uploadAvatar', authMiddleware, userController.uploadAvatar);
 
 // Room Routes
 router.post('/room/create', authMiddleware, roomController.createRoom);

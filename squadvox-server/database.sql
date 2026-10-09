@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   `id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '用户主键ID',
   `wx_openid` VARCHAR(64) NOT NULL COMMENT '微信唯一标识',
   `nickname` VARCHAR(64) DEFAULT '' COMMENT '微信昵称',
-  `avatar` VARCHAR(255) DEFAULT '' COMMENT '头像地址',
+  `avatar` VARCHAR(512) DEFAULT '' COMMENT '头像地址（内置主题路径或上传后的 URL）',
   `game_area` VARCHAR(16) DEFAULT '' COMMENT '游戏大区：微信区/QQ区',
   `game_server` VARCHAR(32) DEFAULT '' COMMENT '游戏服务器',
   `game_id` VARCHAR(32) DEFAULT '' COMMENT '王者荣耀游戏ID',

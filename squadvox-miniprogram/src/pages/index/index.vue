@@ -1,108 +1,24 @@
 <template>
-  <view class="app-wrapper bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-0 md:p-6 overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+  <view class="app-wrapper bg-slate-950 text-slate-100 min-h-screen flex flex-col overflow-x-hidden selection:bg-indigo-500 selection:text-white">
 
-    <!-- Desktop Top Control Bar (适配 PC 浏览器浏览) -->
-    <header class="w-full max-w-4xl hidden md:flex items-center justify-between mb-4 px-4 py-2.5 bg-vox-card rounded-2xl border border-vox-border shadow-xl">
-      <view class="flex items-center gap-3">
-        <view class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-cyan-400 flex items-center justify-center font-black tracking-wider text-slate-950 text-base shadow-md">
-          SV
-        </view>
-        <view>
-          <view class="flex items-center gap-2">
-            <text class="font-bold text-white text-base tracking-wide">SquadVox 开黑语聊房</text>
-            <text class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium flex items-center gap-1">
-              <text class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></text>
-              TRTC 引擎已就绪
-            </text>
-          </view>
-          <text class="text-xs text-slate-400">微信小程序 V1.0 正式版 • 完整闭环交互原型</text>
-        </view>
-      </view>
-
-      <!-- Quick Actions -->
-      <view class="flex items-center gap-3">
-        <button @click="toggleSoundFx" 
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition m-0 border-none">
-          <i class="fa-solid fa-volume-high text-indigo-400"></i>
-          <text>交互音效: {{ soundEnabled ? '开' : '关' }}</text>
-        </button>
-
-        <button @click="toggleDeviceView" 
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-md transition m-0 border-none">
-          <i class="fa-solid fa-mobile-screen"></i>
-          <text>{{ isFullscreen ? '恢复手机外壳' : '切换全屏模式' }}</text>
-        </button>
-      </view>
-    </header>
-
+    
     <!-- Mobile Simulator Frame (手机模型框架) -->
-    <main :class="['mobile-frame-wrap bg-vox-dark relative flex flex-col overflow-hidden', 
-                  isFullscreen ? 'w-full h-screen rounded-none border-0' : 'w-full md:w-[414px] h-[100vh] md:h-[844px] md:rounded-[42px] md:border-[10px] md:border-slate-800 shadow-2xl']">
+    <main class="w-full h-screen bg-vox-dark relative flex flex-col overflow-hidden">
 
-      <!-- WeChat Capsule & Status Bar Simulation (微信小程序状态栏与胶囊仿真) -->
-      <view class="w-full pt-3 pb-2 px-4 flex items-center justify-between z-30 select-none bg-vox-dark/95 border-b border-white/[0.04]">
-        <!-- Time & System Icons -->
-        <view class="flex items-center gap-2 text-xs font-semibold tracking-wider text-slate-300">
-          <text>{{ mockTime }}</text>
-          <i class="fa-solid fa-signal text-[10px] opacity-80"></i>
-          <i class="fa-solid fa-wifi text-[10px] opacity-80"></i>
-        </view>
-
-        <!-- Center Title with pulsing dot -->
-        <view class="text-xs font-bold tracking-wide text-slate-200 flex items-center gap-1.5">
-          <text class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></text>
-          <text>{{ currentNavTitle }}</text>
-        </view>
-
-        <!-- WeChat Capsule (胶囊按钮) -->
-        <view class="flex items-center gap-2.5 bg-black/40 border border-white/10 px-3 py-1 rounded-full text-slate-300 text-xs">
-          <view @click="showToast('已唤起小程序原生菜单', 'info')" class="hover:text-white transition cursor-pointer">
-            <i class="fa-solid fa-ellipsis"></i>
-          </view>
-          <text class="w-[1px] h-3 bg-white/20"></text>
-          <view @click="showToast('模拟小程序最小化', 'info')" class="hover:text-white transition cursor-pointer">
-            <i class="fa-regular fa-circle-dot"></i>
+      <!-- Custom AppBar (自定义导航栏 + 状态栏/刘海安全区) -->
+      <view v-show="currentTab !== 'room'" class="app-navbar shrink-0 relative z-50" :style="{ paddingTop: statusBarHeight + 'px' }">
+        <view class="h-11 flex items-center px-3 bg-vox-dark">
+          <view class="flex items-center gap-2">
+            <view class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center font-black text-slate-950 text-xs">SV</view>
+            <text class="text-sm font-bold text-white">{{ currentNavTitle }}</text>
           </view>
         </view>
       </view>
 
-      <!-- Active Floating Audio Bar (切出房间在大厅/资料页常驻的悬浮条) -->
-      <view v-if="activeRoom && currentTab !== 'room'"
-            class="absolute top-12 left-3 right-3 z-40 bg-gradient-to-r from-indigo-950/95 via-slate-900/95 to-slate-900/95 border border-indigo-500/40 rounded-2xl p-2.5 shadow-2xl backdrop-blur-md flex items-center justify-between transition-all">
-        <view class="flex items-center gap-2.5 cursor-pointer flex-1" @click="switchTab('room')">
-          <view class="relative">
-            <view class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white text-xs">
-              <i class="fa-solid fa-headset text-sm"></i>
-            </view>
-            <text class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full animate-ping"></text>
-          </view>
-          <view class="overflow-hidden">
-            <view class="flex items-center gap-1.5">
-              <text class="text-xs font-bold text-white truncate max-w-[130px]">{{ activeRoom.name }}</text>
-              <text class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 shrink-0 font-medium">TRTC 在线</text>
-            </view>
-            <view class="text-[11px] text-slate-400 flex items-center gap-1 truncate">
-              <text class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></text>
-              <text>{{ activeRoom.members.length }}人 • 点击返回语音房</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="flex items-center gap-2 shrink-0">
-          <button @click.stop="toggleMyMic" title="切换麦克风"
-                  :class="['w-8 h-8 rounded-full flex items-center justify-center text-xs transition m-0 border-none', 
-                          currentUser.isMicOn ? 'bg-slate-800 text-emerald-400' : 'bg-slate-800 text-rose-400']">
-            <i :class="currentUser.isMicOn ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash'"></i>
-          </button>
-          <button @click.stop="leaveRoomConfirm" title="退出房间"
-                  class="w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 flex items-center justify-center text-xs transition m-0 border-none">
-            <i class="fa-solid fa-phone-slash"></i>
-          </button>
-        </view>
-      </view>
+      <!-- Active Floating Audio Bar 已移除：房内快捷入口统一收敛到右下角悬浮按钮（节省顶部空间、避免遮挡房间列表） -->
 
       <!-- Viewport Container for Pages (页面视口滚动区域) -->
-      <view class="flex-1 overflow-y-auto relative pb-20 no-scrollbar">
+      <view class="flex-1 overflow-y-auto relative pb-28 no-scrollbar">
 
         <!-- ============================================== -->
         <!-- VIEW 1: LOBBY PAGE (开黑大厅)                  -->
@@ -183,9 +99,12 @@
               <view class="flex items-start justify-between">
                 <view class="flex items-center gap-2.5">
                   <view class="relative">
-                    <image :src="room.ownerAvatar" class="w-10 h-10 rounded-xl object-cover border border-white/10" />
-                    <text v-if="room.members.some(m => m.isSpeaking)"
-                          class="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-900 animate-ping"></text>
+                    <!-- 房间内有队友说话时，房主头像外圈同样走水波涟漪 -->
+                    <template v-if="room.members.some(m => m.isSpeaking)">
+                      <view class="voice-ripple w-10 h-10 rounded-xl"></view>
+                      <view class="voice-ripple voice-ripple--delay w-10 h-10 rounded-xl"></view>
+                    </template>
+                    <image :src="room.ownerAvatar" class="relative w-10 h-10 rounded-xl object-cover border border-white/10" />
                   </view>
                   <view>
                     <view class="flex items-center gap-1.5">
@@ -239,234 +158,232 @@
             <view v-if="filteredRooms.length === 0" class="text-center py-10 text-slate-500 text-xs">
               <i class="fa-solid fa-gamepad text-2xl mb-2 text-slate-600 block"></i>
               <text>暂无符合筛选条件的开黑房间</text>
-              <button @click="openCreateRoomModal" class="mt-3 px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium inline-block m-0 border-none">
+              <button @click="openCreateRoomModal" class="mt-3 px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium inline-block m-0 border-none min-h-[40px]">
                 创建第一个车队
               </button>
             </view>
           </view>
         </section>
 
-        <!-- ============================================== -->
-        <!-- VIEW 2: VOICE ROOM PAGE (核心语音房)          -->
-        <!-- ============================================== -->
-        <section v-show="currentTab === 'room'" class="p-4 flex flex-col h-full space-y-3">
-          <!-- Room Header Card -->
-          <view class="glass-card rounded-2xl p-3.5 space-y-2 border border-vox-border" v-if="activeRoom">
-            <view class="flex items-center justify-between">
-              <view class="flex items-center gap-2">
-                <text class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></text>
-                <text class="text-base font-black text-white truncate max-w-[200px]">{{ activeRoom.name }}</text>
-                <text class="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-semibold shrink-0">
-                  {{ activeRoom.type }} • {{ activeRoom.tag }}
-                </text>
-              </view>
-              <view class="flex items-center gap-1.5 text-xs">
-                <text class="text-emerald-400 font-mono text-[11px] flex items-center gap-1">
-                  <i class="fa-solid fa-wifi text-[10px]"></i> 18ms
-                </text>
-                <button @click="openRoomSettingsModal" title="房间设置"
-                        class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center transition m-0 border-none">
-                  <i class="fa-solid fa-sliders"></i>
-                </button>
-              </view>
-            </view>
+        <section v-if="currentTab === 'room' && activeRoom" class="fixed inset-0 z-[100] bg-gradient-to-b from-indigo-950 via-purple-950 to-slate-950 flex flex-col overflow-hidden">
+          
+          <!-- Decorative Background Blurs -->
+          <view class="absolute top-[10%] left-[-20%] w-64 h-64 bg-fuchsia-600/20 rounded-full blur-3xl pointer-events-none"></view>
+          <view class="absolute bottom-[20%] right-[-20%] w-72 h-72 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></view>
 
-            <!-- Room Meta / Fast Share Row -->
-            <view class="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-white/5">
-              <view class="flex items-center gap-2">
-                <text>房间号: <text class="text-slate-200 font-mono">{{ activeRoom.roomNo }}</text></text>
-                <text class="text-slate-600">|</text>
-                <text>{{ activeRoom.members.length }} / {{ activeRoom.maxNum }} 人在线</text>
+          <!-- Custom Room AppBar -->
+          <view class="shrink-0 relative z-10" :style="{ paddingTop: statusBarHeight + 'px' }">
+            <view class="h-11 flex items-center justify-between px-4">
+              <view class="flex items-center gap-2 cursor-pointer active:opacity-70 transition" @click="currentTab = 'lobby'">
+                <i class="fa-solid fa-chevron-left text-lg text-white"></i>
+                <text class="text-base font-bold text-white">{{ activeRoom.name }}</text>
               </view>
-
-              <button @click="copyTeamShareText"
-                      class="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 text-[11px] font-medium bg-cyan-950/40 px-2 py-0.5 rounded-md border border-cyan-800/50 transition m-0">
-                <i class="fa-regular fa-copy"></i>
-                <text>复制组队文案</text>
+              <button @click="leaveRoomConfirm" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/90 active:bg-rose-500/50 active:text-white transition m-0 p-0 border-none">
+                <i class="fa-solid fa-power-off text-sm"></i>
               </button>
             </view>
           </view>
 
-          <!-- OS Background Voice Notice Banner -->
-          <view class="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-2.5 text-[11px] text-indigo-200 flex items-start gap-2">
-            <i class="fa-solid fa-shield-halved text-cyan-400 mt-0.5 shrink-0"></i>
-            <view>
-              <text class="font-bold text-white">后台语聊保活指南：</text>
-              <text>切至游戏时iOS麦克风仅可收听；安卓建议在手机后台锁定本小程序并关闭省电策略。</text>
+          <!-- Room Meta / Fast Share Row -->
+          <view class="flex justify-center mt-1 relative z-10">
+            <view class="bg-black/30 rounded-full px-4 py-1 flex items-center gap-3 text-[10px] text-white/70 border border-white/5">
+              <text>ID: {{ activeRoom.roomNo }}</text>
+              <text class="w-[1px] h-2 bg-white/20"></text>
+              <text>在线: {{ activeRoom.members.length }}</text>
+              <text class="w-[1px] h-2 bg-white/20"></text>
+              <text class="text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-wifi text-[8px]"></i> 18ms</text>
             </view>
           </view>
 
-          <!-- TRTC Voice Stage (车队麦位区) -->
-          <view class="glass-card rounded-2xl p-4 border border-vox-border" v-if="activeRoom">
-            <view class="flex items-center justify-between mb-3 text-xs">
-              <view class="font-bold text-slate-300 flex items-center gap-1.5">
-                <i class="fa-solid fa-users-rays text-indigo-400"></i>
-                <text>小队麦位席 (TRTC实时声讯)</text>
-              </view>
-              <text class="text-[11px] text-slate-400">点击头像可查看资料或管控</text>
-            </view>
-
-            <!-- Slots Layout Grid (根据模式动态栅格) -->
-            <view :class="getVoiceSlotsGridClass">
-              <view v-for="i in activeRoom.maxNum" :key="i" class="flex flex-col items-center justify-center space-y-1.5">
-                <!-- Occupied Seat -->
-                <template v-if="activeRoom.members[i - 1]">
-                  <view class="relative cursor-pointer group" @click="openMemberDetailModal(activeRoom.members[i - 1])">
-                    <view :class="['w-12 h-12 rounded-2xl overflow-hidden border-2 transition', 
-                                  (activeRoom.members[i - 1].isSpeaking && activeRoom.members[i - 1].micOpen && !isAllMutedByHost) ? 'voice-active border-emerald-400' : (activeRoom.members[i - 1].isHost ? 'border-amber-400/80' : 'border-slate-700')]">
-                      <image :src="activeRoom.members[i - 1].avatar" class="w-full h-full object-cover group-hover:scale-105 transition" />
-                    </view>
-
-                    <!-- Host Crown or Position Badge -->
-                    <text v-if="activeRoom.members[i - 1].isHost"
-                          class="absolute -top-2 -right-1 bg-amber-500 text-slate-950 text-[9px] font-black px-1 rounded-full shadow">房主</text>
-                    <text v-else
-                          class="absolute -bottom-1 -left-1 bg-indigo-600 text-white text-[9px] font-bold px-1 rounded shadow">
-                      {{ (activeRoom.members[i - 1].position || '队员').slice(0, 2) }}
-                    </text>
-
-                    <!-- Mic Status -->
-                    <view :class="['absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px]', 
-                                  (activeRoom.members[i - 1].micOpen && !isAllMutedByHost) ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-rose-400 border border-rose-500/40']">
-                      <i :class="(activeRoom.members[i - 1].micOpen && !isAllMutedByHost) ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash'"></i>
-                    </view>
-                  </view>
-
-                  <view class="text-center w-full px-0.5">
-                    <text class="text-[11px] font-semibold text-white truncate max-w-[60px] block">
-                      {{ activeRoom.members[i - 1].id === currentUser.id ? '我' : activeRoom.members[i - 1].name }}
-                    </text>
-                    <text class="text-[9px] text-slate-400 truncate block">
-                      {{ (activeRoom.members[i - 1].rank || '').split(' ')[0] }}
-                    </text>
-                  </view>
-                </template>
-
-                <!-- Empty Seat -->
-                <template v-else>
-                  <button @click="copyTeamShareText"
-                          class="w-12 h-12 rounded-2xl border-2 border-dashed border-slate-700 bg-slate-900/60 hover:border-indigo-500/80 flex flex-col items-center justify-center text-slate-500 hover:text-indigo-400 transition group m-0">
-                    <i class="fa-solid fa-plus text-xs group-hover:scale-110 transition"></i>
-                  </button>
-                  <view class="text-center">
-                    <text class="text-[10px] text-slate-500 font-medium block">空位</text>
-                    <text class="text-[9px] text-slate-600 block">邀请</text>
-                  </view>
-                </template>
-              </view>
-            </view>
-
-            <!-- Sound Wave Activity Bar Indicator -->
-            <view class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs">
-              <view class="flex items-center gap-2">
-                <text class="text-[11px] text-slate-400">当前发言:</text>
-                <text class="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                  {{ currentSpeaker ? `${currentSpeaker.name} (${currentSpeaker.isHost ? '房主' : currentSpeaker.position})` : '等待队友开麦...' }}
-                </text>
-              </view>
-              <!-- Equalizer Sound Wave -->
-              <view class="flex items-end gap-1 h-5 px-2">
-                <text class="w-1 bg-emerald-400 rounded-full bar-1"></text>
-                <text class="w-1 bg-emerald-400 rounded-full bar-2"></text>
-                <text class="w-1 bg-emerald-400 rounded-full bar-3"></text>
-                <text class="w-1 bg-emerald-400 rounded-full bar-4"></text>
-              </view>
+          <view class="flex justify-center mt-3 relative z-10">
+            <view class="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1">
+              <text class="text-[10px] text-indigo-300 font-bold bg-indigo-500/20 px-2 py-0.5 rounded-full">{{ activeRoom.type }}</text>
+              <text class="text-[10px] text-amber-300 font-bold bg-amber-500/20 px-2 py-0.5 rounded-full">{{ activeRoom.tag }}</text>
+              <button open-type="share" class="text-[10px] text-white/80 ml-1 flex items-center gap-1 p-0 m-0 bg-transparent border-none">
+                <i class="fa-regular fa-copy"></i>
+              </button>
             </view>
           </view>
 
-          <!-- Room Barrage / Chat Area -->
-          <view class="glass-card rounded-2xl p-3 flex-1 flex flex-col justify-between border border-vox-border overflow-hidden min-h-[160px]">
-            <!-- Chat list -->
-            <scroll-view scroll-y class="overflow-y-auto space-y-2 pr-1 text-xs" style="max-height: 140px;">
-              <view class="text-[11px] text-slate-500 text-center py-1">
-                - 房间已开启微信内容安全审核，严禁广告、代练与侮辱言论 -
-              </view>
-              <view v-for="(chat, idx) in chatMessages" :key="idx" class="flex items-start gap-1.5 text-slate-300">
-                <text v-if="chat.isSystem" class="px-1.5 py-0.2 rounded bg-indigo-500/30 text-indigo-300 text-[10px]">系统</text>
-                <text v-else class="px-1.5 py-0.2 rounded bg-slate-800 text-cyan-300 text-[10px]">{{ chat.sender }}</text>
-                <text class="text-slate-300">{{ chat.content }}</text>
-              </view>
-            </scroll-view>
-
-            <!-- Chat Input & Quick Tactical Phrases -->
-            <view class="pt-2 border-t border-white/5 space-y-2">
-              <!-- Quick Chips -->
-              <view class="flex items-center gap-1.5 overflow-x-auto text-[11px] no-scrollbar py-0.5">
-                <view v-for="phrase in quickPhrases" :key="phrase"
-                      @click="sendQuickChat(phrase)"
-                      class="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 hover:text-white shrink-0 transition cursor-pointer active:scale-95 text-xs whitespace-nowrap">
-                  {{ phrase }}
+          <!-- Main Scrollable Area -->
+          <scroll-view scroll-y class="flex-1 relative z-10" :style="{ paddingBottom: (80 + safeAreaBottom) + 'px' }">
+            
+            <!-- Seats Area -->
+            <view class="mt-6 px-4">
+              <!-- Host Seat (Top Center) -->
+              <view class="flex justify-center mb-8" v-if="activeRoom.members[0]">
+                <view class="relative flex flex-col items-center group" @click="openMemberDetailModal(activeRoom.members[0])">
+                  <template v-if="isSeatSpeaking(0)">
+                    <view class="voice-ripple w-20 h-20 rounded-full border-0"></view>
+                    <view class="voice-ripple voice-ripple--delay w-20 h-20 rounded-full border-0"></view>
+                  </template>
+                  <view :class="['relative w-20 h-20 rounded-full border-2 overflow-hidden transition shadow-lg', 
+                                isSeatSpeaking(0) ? 'voice-glow border-emerald-400' : 'border-amber-400 shadow-amber-500/30']">
+                    <image :src="activeRoom.members[0].avatar" class="w-full h-full object-cover" />
+                  </view>
+                  <view :class="['absolute bottom-11 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-[10px] shadow-md border-2 border-slate-900', 
+                                (activeRoom.members[0].micOpen && !isAllMutedByHost) ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-rose-400']">
+                    <i :class="(activeRoom.members[0].micOpen && !isAllMutedByHost) ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash'"></i>
+                  </view>
+                  <text class="text-sm font-bold mt-2 text-white drop-shadow-md">{{ activeRoom.members[0].name }}</text>
+                  <text class="text-[10px] bg-gradient-to-r from-amber-500/30 to-amber-600/30 text-amber-300 px-2 py-0.5 rounded-full mt-1 border border-amber-500/20 shadow-sm flex items-center gap-1">
+                    <i class="fa-solid fa-crown text-[8px]"></i> 房主
+                  </text>
                 </view>
               </view>
 
-              <!-- Input Bar -->
-              <view class="flex items-center gap-2">
-                <input type="text" v-model="chatInputText" @confirm="handleSendChat" confirm-type="send"
-                       placeholder="发弹幕交流 (前置内容安全拦截)..." maxlength="60"
-                       class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition" />
-                <button @click="handleSendChat"
-                        class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shrink-0 transition m-0 border-none leading-normal">
-                  发送
-                </button>
+              <!-- Guest Seats Grid (Below Host) -->
+              <view class="grid grid-cols-4 gap-y-6 gap-x-2">
+                <view v-for="i in (activeRoom.maxNum - 1)" :key="i" class="flex flex-col items-center">
+                  <!-- Occupied Guest Seat -->
+                  <template v-if="activeRoom.members[i]">
+                    <view class="relative flex flex-col items-center group cursor-pointer" @click="openMemberDetailModal(activeRoom.members[i])">
+                      <template v-if="isSeatSpeaking(i)">
+                        <view class="voice-ripple w-14 h-14 rounded-full border-0"></view>
+                        <view class="voice-ripple voice-ripple--delay w-14 h-14 rounded-full border-0"></view>
+                      </template>
+                      <view :class="['relative w-14 h-14 rounded-full border-2 overflow-hidden transition shadow-md', 
+                                    isSeatSpeaking(i) ? 'voice-glow border-emerald-400' : 'border-indigo-400/80 shadow-indigo-500/20']">
+                        <image :src="activeRoom.members[i].avatar" class="w-full h-full object-cover" />
+                      </view>
+                      <view :class="['absolute bottom-9 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[8px] shadow-sm border-2 border-slate-900', 
+                                    (activeRoom.members[i].micOpen && !isAllMutedByHost) ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-rose-400']">
+                        <i :class="(activeRoom.members[i].micOpen && !isAllMutedByHost) ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash'"></i>
+                      </view>
+                      <text class="text-xs font-medium mt-1.5 text-white truncate max-w-[60px] text-center drop-shadow">{{ activeRoom.members[i].name }}</text>
+                      <text class="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-full mt-0.5 border border-indigo-500/10 truncate max-w-[60px] text-center block">
+                        {{ activeRoom.members[i].position || '队员' }}
+                      </text>
+                    </view>
+                  </template>
+                  <!-- Empty Guest Seat -->
+                  <template v-else>
+                    <view class="flex flex-col items-center">
+                      <button open-type="share" class="w-14 h-14 rounded-full border border-dashed border-white/20 bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 transition m-0 p-0">
+                        <i class="fa-solid fa-plus text-sm"></i>
+                      </button>
+                      <text class="text-[10px] text-white/40 mt-1.5">{{ i }}号麦</text>
+                    </view>
+                  </template>
+                </view>
               </view>
             </view>
-          </view>
 
-          <!-- In-Room Voice Control Bar -->
-          <view class="glass-card rounded-2xl p-2.5 flex items-center justify-between border border-vox-border mt-auto">
-            <view class="flex items-center gap-3">
-              <!-- Mic Button -->
-              <button @click="toggleMyMic"
-                      :class="['flex items-center gap-2 px-3 py-2 rounded-xl border transition m-0 border-none', 
-                              currentUser.isMicOn ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-600/30' : 'bg-rose-600/20 text-rose-400 border border-rose-500/40 hover:bg-rose-600/30']">
-                <i :class="['text-sm', currentUser.isMicOn ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash']"></i>
-                <text class="text-xs font-bold">{{ currentUser.isMicOn ? '已开麦' : '已静音' }}</text>
-              </button>
-
-              <!-- Deafen / Speaker Button -->
-              <button @click="toggleMySpeaker"
-                      class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 hover:text-white transition m-0 border-none">
-                <i :class="['text-xs', currentUser.isSpeakerOn ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-rose-400']"></i>
-                <text class="text-xs font-medium">{{ currentUser.isSpeakerOn ? '扬声器' : '已静音' }}</text>
-              </button>
+            <!-- Chat Area List -->
+            <view class="mt-8 px-4 space-y-3">
+              <view class="bg-black/20 rounded-xl p-2.5 border border-white/5 text-[10px] text-white/60 leading-relaxed text-center">
+                平台严打违规行为，欢迎积极举报。
+              </view>
+              <view v-for="(chat, idx) in chatMessages" :key="idx" class="flex flex-col gap-0.5">
+                <!-- Chat Bubble -->
+                <view class="flex items-start gap-2">
+                  <view v-if="!chat.isSystem" class="w-7 h-7 rounded-full overflow-hidden shrink-0 mt-0.5 border border-white/10">
+                    <image :src="activeRoom.members.find(m => m && m.name === chat.sender)?.avatar || '/static/default-avatar.png'" class="w-full h-full object-cover" />
+                  </view>
+                  <view class="bg-white/10 rounded-2xl rounded-tl-sm px-3 py-2 border border-white/5 max-w-[85%] backdrop-blur-md">
+                    <view class="flex items-center gap-1.5 mb-0.5">
+                      <text class="text-[11px] font-bold text-white/80" :class="chat.isSystem ? 'text-indigo-300' : ''">{{ chat.sender }}</text>
+                    </view>
+                    <text class="text-xs text-white/90 leading-relaxed">{{ chat.content }}</text>
+                  </view>
+                </view>
+              </view>
             </view>
+          </scroll-view>
 
-            <!-- Leave Room Button -->
-            <button @click="leaveRoomConfirm"
-                    class="flex items-center gap-1 px-3 py-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition text-xs font-bold m-0 border-none">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
-              <text>退出</text>
+          <!-- Bottom Fixed Input Bar -->
+          <view class="absolute bottom-0 left-0 right-0 px-4 pt-3 pb-[env(safe-area-inset-bottom)] bg-gradient-to-t from-black via-black/80 to-transparent flex items-center gap-3 z-20" :style="{ paddingBottom: Math.max(12, safeAreaBottom) + 'px' }">
+            <!-- Big Mic Toggle -->
+            <button @click="toggleMyMic" :class="['w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white m-0 p-0 border shadow-lg transition active:scale-95', currentUser.isMicOn ? 'bg-fuchsia-600 border-fuchsia-400 shadow-fuchsia-500/50' : 'bg-slate-800 border-slate-600 shadow-slate-900/50']">
+              <i :class="['text-sm', currentUser.isMicOn ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash']"></i>
+            </button>
+            
+            <!-- Input Box trigger (To show input overlay) -->
+            <view class="flex-1 h-9 rounded-full bg-black/40 border border-white/10 px-4 flex items-center gap-2 transition active:bg-white/5" @click="chatInputFocused = true">
+              <text class="text-xs text-white/50">聊聊吧...</text>
+            </view>
+            
+            <!-- Tools -->
+            <button @click="openRoomSettingsModal" class="w-9 h-9 shrink-0 rounded-full bg-white/10 flex items-center justify-center text-white/80 active:bg-white/20 transition m-0 p-0 border-none">
+              <i class="fa-solid fa-gear text-sm"></i>
             </button>
           </view>
+          
+          <!-- Input Overlay (When typing) -->
+          <view v-if="chatInputFocused" class="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex flex-col justify-end" @click="chatInputFocused = false">
+             <view class="bg-slate-900 w-full p-3 rounded-t-2xl flex items-center gap-2 border-t border-white/10" @click.stop :style="{ paddingBottom: Math.max(12, safeAreaBottom) + 'px' }">
+                <input type="text" v-model="chatInputText" @confirm="handleSendChat" confirm-type="send"
+                       placeholder="说点什么…" maxlength="60" focus
+                       placeholder-class="input-placeholder"
+                       class="flex-1 min-w-0 bg-black/30 border border-white/10 rounded-xl px-3 h-10 text-xs text-white transition" />
+                <button @click="handleSendChat"
+                        class="px-4 rounded-xl bg-indigo-600 text-white text-xs font-semibold shrink-0 transition m-0 border-none leading-normal h-10 flex items-center justify-center">
+                  <i class="fa-solid fa-paper-plane mr-1.5"></i> 发送
+                </button>
+             </view>
+          </view>
+          
         </section>
 
         <!-- ============================================== -->
         <!-- VIEW 3: PROFILE PAGE (个人游戏资料)           -->
         <!-- ============================================== -->
         <section v-show="currentTab === 'profile'" class="p-4 space-y-4">
-          <!-- User Wechat Auth Banner -->
-          <view class="glass-card rounded-2xl p-4 border border-vox-border flex items-center justify-between">
+          <!-- 微信资料授权（头像 / 昵称） -->
+          <view class="glass-card rounded-2xl p-4 border border-vox-border space-y-3">
+            <view class="flex items-center justify-between">
+              <view class="flex items-center gap-2">
+                <i class="fa-brands fa-weixin text-emerald-400"></i>
+                <text class="font-bold text-white text-sm">微信资料授权</text>
+              </view>
+              <text :class="['text-[10px] px-2 py-0.5 rounded', isProfileAuthorized ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30']">
+                {{ isProfileAuthorized ? '已授权' : '待授权' }}
+              </text>
+            </view>
+
             <view class="flex items-center gap-3">
-              <view class="relative cursor-pointer group" @click="openAvatarModal" title="更换微信头像">
-                <image :src="currentUser.avatar" class="w-14 h-14 rounded-2xl object-cover border-2 border-indigo-500/50 shadow-md group-hover:opacity-80 transition" />
-                <text class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-slate-900 rounded-full"></text>
-                <view class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white">
+              <!-- 微信官方头像授权：open-type="chooseAvatar" -->
+              <button open-type="chooseAvatar" @chooseavatar="onChooseAvatar"
+                      class="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-indigo-500/50 shrink-0 m-0 p-0 bg-transparent leading-normal">
+                <image :src="currentUser.avatar || '/static/default-avatar.png'"
+                       class="w-16 h-16 rounded-2xl object-cover" />
+                <view class="absolute inset-x-0 bottom-0 h-5 bg-black/60 text-white text-[9px] leading-5 text-center">
                   换头像
                 </view>
-              </view>
-              <view>
-                <view class="flex items-center gap-2">
-                  <text class="font-bold text-white text-base">{{ currentUser.nickname }}</text>
-                  <text class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">微信已授权</text>
+              </button>
+
+              <view class="flex-1 min-w-0 space-y-1.5">
+                <!-- 微信官方昵称填写：type="nickname" 会唤起微信昵称建议 -->
+                <input type="nickname" v-model="currentUser.nickname" maxlength="20"
+                       placeholder="点击获取微信昵称" placeholder-class="input-placeholder"
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 h-10 text-sm text-white min-w-0" />
+                <view class="flex items-center gap-1.5 text-[10px] text-slate-500">
+                  <text class="font-mono shrink-0">UID: {{ currentUser.id }}</text>
+                  <text>·</text>
+                  <text class="truncate font-mono">{{ maskedOpenid }}</text>
                 </view>
-                <text class="text-xs text-slate-400 font-mono mt-0.5 block">UID: {{ currentUser.id }}</text>
               </view>
             </view>
 
-            <button @click="triggerWechatAuthSwitch"
-                    class="text-xs text-indigo-400 hover:text-indigo-300 font-medium px-2.5 py-1 rounded bg-slate-800/80 transition m-0 border-none">
-              切换微信
-            </button>
+            <view class="flex items-center gap-2">
+              <button @click="saveWechatProfile"
+                      class="flex-1 h-10 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs m-0 border-none leading-normal">
+                保存微信资料
+              </button>
+              <button @click="randomizeProfile"
+                      class="px-3 h-10 rounded-xl bg-slate-800 text-cyan-300 border border-cyan-500/30 text-xs font-bold m-0 leading-normal">
+                随机换一套
+              </button>
+            </view>
+
+            <view class="flex items-center justify-between pt-0.5">
+              <text @click="openAvatarModal" class="text-[11px] text-indigo-400 active:text-indigo-300">
+                从预设头像中选择 ›
+              </text>
+              <text @click="switchWechatAccount" class="text-[11px] text-slate-400 active:text-slate-200">
+                切换微信账号 ›
+              </text>
+            </view>
           </view>
 
           <!-- Game Profile Edit Card -->
@@ -487,12 +404,12 @@
                 <view class="grid grid-cols-2 gap-2">
                   <button type="button" @click="currentUser.region = '微信区'"
                           :class="['py-2 px-3 rounded-xl border font-bold flex items-center justify-center gap-1.5 transition m-0', 
-                                  currentUser.region === '微信区' ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300' : 'border-slate-700 bg-slate-900 text-slate-400']">
+                                  currentUser.region === '微信区' ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300' : 'border-slate-700 bg-slate-900 text-slate-400']" class="min-h-[40px]">
                     <i class="fa-brands fa-weixin text-emerald-400"></i> 微信区
                   </button>
                   <button type="button" @click="currentUser.region = 'QQ区'"
                           :class="['py-2 px-3 rounded-xl border flex items-center justify-center gap-1.5 transition m-0', 
-                                  currentUser.region === 'QQ区' ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300 font-bold' : 'border-slate-700 bg-slate-900 text-slate-400']">
+                                  currentUser.region === 'QQ区' ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300 font-bold' : 'border-slate-700 bg-slate-900 text-slate-400']" class="min-h-[40px]">
                     <i class="fa-brands fa-qq text-sky-400"></i> QQ区
                   </button>
                 </view>
@@ -502,13 +419,13 @@
               <view class="grid grid-cols-2 gap-2">
                 <view>
                   <text class="block text-slate-400 mb-1">游戏服务器</text>
-                  <input type="text" v-model="currentUser.server"
-                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+                  <input placeholder-class="input-placeholder" type="text" v-model="currentUser.server"
+                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 h-10 min-h-[40px] leading-tight" />
                 </view>
                 <view>
                   <text class="block text-slate-400 mb-1">王者游戏ID</text>
-                  <input type="text" v-model="currentUser.gameId"
-                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+                  <input placeholder-class="input-placeholder" type="text" v-model="currentUser.gameId"
+                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 h-10 min-h-[40px] leading-tight" />
                 </view>
               </view>
 
@@ -516,7 +433,7 @@
               <view>
                 <text class="block text-slate-400 mb-1">当前游戏段位</text>
                 <picker @change="onRankSelectChange" :value="currentRankIndex" :range="rankList">
-                  <view class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white flex justify-between items-center">
+                <view class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white flex justify-between items-center h-10 min-h-[40px]">
                     <text>{{ currentUser.rank }}</text>
                     <i class="fa-solid fa-chevron-down text-slate-500 text-[10px]"></i>
                   </view>
@@ -529,8 +446,8 @@
                 <view class="grid grid-cols-5 gap-1.5">
                   <button v-for="pos in positionOptions" :key="pos" type="button"
                           @click="togglePosition(pos)"
-                          :class="['pos-tag py-1.5 rounded-lg border text-center transition m-0 text-xs', 
-                                  currentUser.positions.includes(pos) ? 'border-indigo-500 bg-indigo-600/30 text-indigo-300 font-bold' : 'border-slate-700 bg-slate-900 text-slate-300 font-medium']">
+                          :class="['pos-tag py-1.5 min-h-[36px] flex items-center justify-center rounded-lg border text-center transition m-0 text-xs', 
+                                  currentUser.positions.includes(pos) ? 'border-indigo-500 bg-indigo-600/30 text-indigo-300 font-bold' : 'border-slate-700 bg-slate-900 text-slate-300 font-medium']" class="min-h-[40px]">
                     {{ pos }}
                   </button>
                 </view>
@@ -538,7 +455,7 @@
 
               <!-- Save Info Action Button -->
               <button @click="saveUserProfile"
-                      class="w-full py-2.5 mt-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-indigo-500/20 active:scale-98 transition flex items-center justify-center gap-1.5 m-0 border-none leading-normal">
+                      class="w-full h-11 min-h-[44px] mt-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-indigo-500/20 active:scale-98 transition flex items-center justify-center gap-1.5 m-0 border-none leading-normal">
                 <i class="fa-solid fa-floppy-disk"></i>
                 <text>保存个人资料 (/squadvox/api/user/saveInfo)</text>
               </button>
@@ -558,6 +475,24 @@
             </text>
           </view>
 
+          <!-- Device / Microphone Self-Test -->
+          <view class="glass-card rounded-2xl p-4 border border-vox-border space-y-2.5">
+            <view class="flex items-center justify-between">
+              <view class="flex items-center gap-2">
+                <i class="fa-solid fa-microphone-lines text-emerald-400"></i>
+                <text class="font-bold text-white text-sm">设备检测</text>
+              </view>
+              <text class="text-[10px] text-slate-400">录一段听听自己</text>
+            </view>
+            <text class="text-[11px] text-slate-400 leading-relaxed block">
+              录音后自动回放。能清楚听到自己的声音，说明麦克风与扬声器都正常。
+            </text>
+            <button @click="openMicTest"
+                    class="w-full py-2 rounded-xl bg-slate-800 text-emerald-400 border border-emerald-500/30 font-bold text-xs m-0 border-none leading-normal min-h-[40px] active:bg-slate-700 transition">
+              测试麦克风
+            </button>
+          </view>
+
           <!-- Version Meta -->
           <view class="text-center text-[11px] text-slate-500 pt-2">
             SquadVox 开黑语聊房 v1.0.0 (Build 20261008)
@@ -566,53 +501,56 @@
 
       </view>
 
-      <!-- Bottom Navigation Bar (TabBar) -->
-      <nav class="glass-nav absolute bottom-0 left-0 right-0 h-16 flex items-center justify-around px-2 z-30 select-none">
-        <!-- Tab 1: Lobby -->
-        <view @click="switchTab('lobby')"
-              :class="['flex flex-col items-center justify-center gap-0.5 px-3 py-1 cursor-pointer transition select-none', 
-                      currentTab === 'lobby' ? 'text-indigo-400' : 'text-slate-400']">
-          <i class="fa-solid fa-compass text-lg"></i>
-          <text :class="['text-[11px] whitespace-nowrap', currentTab === 'lobby' ? 'font-bold' : '']">开黑大厅</text>
-        </view>
+      <!-- Bottom Navigation Bar (TabBar) — 纯导航，固定悬浮在底部 -->
+      <nav v-show="currentTab !== 'room'" class="glass-nav fixed bottom-0 left-0 right-0 z-30 select-none">
+        <view class="h-16 flex items-center justify-around px-2">
+          <!-- Tab 1: Lobby -->
+          <view @click="switchTab('lobby')"
+                :class="['flex flex-col items-center justify-center gap-0.5 px-6 py-1 rounded-xl cursor-pointer transition select-none', 
+                        currentTab === 'lobby' ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400']">
+            <i class="fa-solid fa-compass text-lg"></i>
+            <text :class="['text-[11px] whitespace-nowrap', currentTab === 'lobby' ? 'font-bold' : '']">开黑大厅</text>
+          </view>
 
-        <!-- Center Plus Button for Create Room -->
-        <view @click="openCreateRoomModal"
-              class="-mt-4 w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 via-indigo-600 to-cyan-400 flex items-center justify-center text-slate-950 shadow-lg shadow-indigo-500/40 hover:scale-105 active:scale-95 transition cursor-pointer"
-              title="创建车队">
-          <i class="fa-solid fa-plus text-base font-black"></i>
+          <!-- Tab 2: Profile -->
+          <view @click="switchTab('profile')"
+                :class="['flex flex-col items-center justify-center gap-0.5 px-6 py-1 rounded-xl cursor-pointer transition select-none', 
+                        currentTab === 'profile' ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400']">
+            <i class="fa-solid fa-user-ninja text-lg"></i>
+            <text :class="['text-[11px] whitespace-nowrap', currentTab === 'profile' ? 'font-bold' : '']">游戏资料</text>
+          </view>
         </view>
-
-        <!-- Tab 2: Current Room -->
-        <view @click="switchTab('room')"
-              :class="['flex flex-col items-center justify-center gap-0.5 px-3 py-1 cursor-pointer transition relative select-none', 
-                      currentTab === 'room' ? 'text-indigo-400' : 'text-slate-400']">
-          <text v-if="activeRoom" class="absolute top-0 right-3 w-2 h-2 rounded-full bg-emerald-400"></text>
-          <i class="fa-solid fa-headset text-lg"></i>
-          <text :class="['text-[11px] whitespace-nowrap', currentTab === 'room' ? 'font-bold' : '']">语聊房间</text>
-        </view>
-
-        <!-- Tab 3: Profile -->
-        <view @click="switchTab('profile')"
-              :class="['flex flex-col items-center justify-center gap-0.5 px-3 py-1 cursor-pointer transition select-none', 
-                      currentTab === 'profile' ? 'text-indigo-400' : 'text-slate-400']">
-          <i class="fa-solid fa-user-ninja text-lg"></i>
-          <text :class="['text-[11px] whitespace-nowrap', currentTab === 'profile' ? 'font-bold' : '']">游戏资料</text>
-        </view>
+        <!-- 底部安全区占位（iPhone 手势条） -->
+        <view class="safe-area-bottom"></view>
       </nav>
+
+      <!-- 语聊房间 悬浮入口（右下角；仅当已加入/创建房间时显示） -->
+      <view v-if="activeRoom && currentTab !== 'room'"
+            @click="switchTab('room')"
+            class="fixed right-4 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 to-cyan-400 text-slate-950 shadow-lg shadow-emerald-500/40 flex flex-col items-center justify-center active:scale-95 transition"
+            :style="{ bottom: (76 + safeAreaBottom) + 'px' }"
+            title="进入语聊房间">
+        <i class="fa-solid fa-headset text-base"></i>
+        <text class="text-[9px] font-black leading-none mt-0.5">语聊房</text>
+        <!-- 麦克风状态角标：一眼看出自己是开麦还是闭麦 -->
+        <view :class="['absolute -top-0.5 -left-0.5 w-5 h-5 rounded-full border-2 border-slate-950 flex items-center justify-center text-[8px]', 
+                       currentUser.isMicOn ? 'bg-emerald-400 text-slate-950' : 'bg-rose-500 text-white']">
+          <i :class="currentUser.isMicOn ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash'"></i>
+        </view>
+      </view>
 
       <!-- ============================================== -->
       <!-- MODAL SYSTEM (7 大高保真弹窗全集)               -->
       <!-- ============================================== -->
 
       <!-- MODAL 0: Avatar Selector Dialog -->
-      <view v-if="modalVisible.avatarSelect"
+      <view v-if="modalVisible.avatarSelect" @click="closeModal('avatarSelect')"
             class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <view class="w-full max-w-xs bg-vox-card rounded-2xl border border-vox-border p-5 space-y-4">
+        <view @click.stop class="w-full max-w-xs bg-vox-card rounded-2xl border border-vox-border p-5 space-y-4">
           <view class="flex items-center justify-between">
             <text class="font-bold text-white text-sm">选择游戏头像</text>
-            <view @click="closeModal('avatarSelect')" class="text-slate-400 hover:text-white cursor-pointer">
-              <i class="fa-solid fa-xmark"></i>
+            <view @click="closeModal('avatarSelect')" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center active:bg-slate-700 transition">
+              <i class="fa-solid fa-xmark text-xs"></i>
             </view>
           </view>
           <text class="text-xs text-slate-400 block">选择您在开黑房间内展示的头像：</text>
@@ -625,24 +563,24 @@
       </view>
 
       <!-- MODAL 1: Create Room Dialog -->
-      <view v-if="modalVisible.createRoom"
+      <view v-if="modalVisible.createRoom" @click="closeModal('createRoom')"
             class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4">
-        <view class="w-full max-w-sm bg-vox-card rounded-t-3xl md:rounded-3xl border border-vox-border p-5 space-y-4 shadow-2xl">
+        <view @click.stop class="w-full max-w-sm bg-vox-card rounded-t-3xl md:rounded-3xl border border-vox-border p-5 space-y-4 shadow-2xl">
           <view class="flex items-center justify-between">
             <view class="flex items-center gap-2">
               <text class="w-2.5 h-2.5 rounded-full bg-cyan-400"></text>
               <text class="font-bold text-white text-base">创建开黑语聊房</text>
             </view>
-            <view @click="closeModal('createRoom')" class="text-slate-400 hover:text-white cursor-pointer">
-              <i class="fa-solid fa-xmark text-base"></i>
+            <view @click="closeModal('createRoom')" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center active:bg-slate-700 transition">
+              <i class="fa-solid fa-xmark text-xs"></i>
             </view>
           </view>
 
           <view class="space-y-3 text-xs">
             <view>
               <text class="block text-slate-400 mb-1">车队名称</text>
-              <input type="text" v-model="createForm.name" maxlength="20" placeholder="例如: 连胜冲星5排缺打野"
-                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+              <input placeholder-class="input-placeholder" type="text" v-model="createForm.name" maxlength="20" placeholder="例如: 连胜冲星5排缺打野"
+                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 h-10 min-h-[40px] leading-tight" />
             </view>
 
             <view>
@@ -650,8 +588,8 @@
               <view class="grid grid-cols-3 gap-2">
                 <button v-for="ct in [{t:'5排',n:5},{t:'3排',n:3},{t:'2排',n:2}]" :key="ct.t"
                         type="button" @click="createForm.type = ct.t; createForm.maxNum = ct.n"
-                        :class="['create-type-btn py-2 rounded-xl text-center font-bold transition m-0 border-none', 
-                                createForm.type === ct.t ? 'bg-indigo-600 text-white border border-indigo-400' : 'bg-slate-900 text-slate-400 border border-slate-700']">
+                        :class="['create-type-btn py-2 h-10 min-h-[40px] flex items-center justify-center rounded-xl text-center font-bold transition m-0 border-none', 
+                                createForm.type === ct.t ? 'bg-indigo-600 text-white border border-indigo-400' : 'bg-slate-900 text-slate-400 border border-slate-700']" class="min-h-[40px]">
                   {{ ct.t }} ({{ ct.n }}人)
                 </button>
               </view>
@@ -660,7 +598,7 @@
             <view>
               <text class="block text-slate-400 mb-1">房间标签</text>
               <picker @change="onCreateTagChange" :value="createTagIndex" :range="tagOptions" range-key="label">
-                <view class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white flex justify-between items-center">
+                <view class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white flex justify-between items-center h-10 min-h-[40px]">
                   <text>{{ createForm.tag }}</text>
                   <i class="fa-solid fa-chevron-down text-slate-500 text-[10px]"></i>
                 </view>
@@ -672,12 +610,12 @@
                 <text class="text-slate-400">房间密码 (选填)</text>
                 <text class="text-[10px] text-slate-500">留空则为公开房间</text>
               </view>
-              <input type="password" v-model="createForm.password" maxlength="6" placeholder="4-6位数字密码"
-                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono" />
+              <input placeholder-class="input-placeholder" type="password" v-model="createForm.password" maxlength="6" placeholder="4-6位数字密码"
+                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono h-10 min-h-[40px] leading-tight" />
             </view>
 
             <button @click="handleCreateRoomSubmit"
-                    class="w-full py-2.5 mt-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-indigo-500/30 active:scale-98 transition flex items-center justify-center gap-1.5 m-0 border-none leading-normal">
+                    class="w-full h-11 min-h-[44px] mt-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-indigo-500/30 active:scale-98 transition flex items-center justify-center gap-1.5 m-0 border-none leading-normal">
               <i class="fa-solid fa-microphone-lines"></i>
               <text>即刻开启语音房 (自动就座房主席)</text>
             </button>
@@ -686,9 +624,9 @@
       </view>
 
       <!-- MODAL 2: Enter Password Prompt -->
-      <view v-if="modalVisible.enterPwd"
+      <view v-if="modalVisible.enterPwd" @click="closeModal('enterPwd')"
             class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <view class="w-full max-w-xs bg-vox-card rounded-2xl border border-vox-border p-5 space-y-4 text-center">
+        <view @click.stop class="w-full max-w-xs bg-vox-card rounded-2xl border border-vox-border p-5 space-y-4 text-center">
           <view class="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto text-xl border border-amber-500/30">
             <i class="fa-solid fa-lock"></i>
           </view>
@@ -696,13 +634,13 @@
             <text class="font-bold text-white text-base block">此车队已加密</text>
             <text class="text-xs text-slate-400 mt-1 block">请输入房主设置的进入密码 (演示默认: 666)</text>
           </view>
-          <input type="password" v-model="inputPassword" maxlength="6" placeholder="输入密码"
-                 class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-center text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono tracking-widest text-sm" />
+          <input placeholder-class="input-placeholder" type="password" v-model="inputPassword" maxlength="6" placeholder="输入密码"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-center text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono tracking-widest text-sm h-10 min-h-[40px] leading-tight" />
           <view class="flex gap-2">
-            <button @click="closeModal('enterPwd')" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs m-0 border-none">
+            <button @click="closeModal('enterPwd')" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs m-0 border-none min-h-[40px]">
               取消
             </button>
-            <button @click="submitVerifyPassword" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs m-0 border-none">
+            <button @click="submitVerifyPassword" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs m-0 border-none min-h-[40px]">
               验证进入
             </button>
           </view>
@@ -710,13 +648,13 @@
       </view>
 
       <!-- MODAL 3: Member Detail & Host Actions Modal -->
-      <view v-if="modalVisible.memberDetail && selectedMember"
+      <view v-if="modalVisible.memberDetail && selectedMember" @click="closeModal('memberDetail')"
             class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4">
-        <view class="w-full max-w-xs bg-vox-card rounded-t-3xl md:rounded-3xl border border-vox-border p-5 space-y-3">
+        <view @click.stop class="w-full max-w-xs bg-vox-card rounded-t-3xl md:rounded-3xl border border-vox-border p-5 space-y-3">
           <view class="flex items-center justify-between">
             <text class="text-xs text-slate-400">队员详细信息</text>
-            <view @click="closeModal('memberDetail')" class="text-slate-400 hover:text-white cursor-pointer">
-              <i class="fa-solid fa-xmark"></i>
+            <view @click="closeModal('memberDetail')" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center active:bg-slate-700 transition">
+              <i class="fa-solid fa-xmark text-xs"></i>
             </view>
           </view>
 
@@ -759,16 +697,16 @@
       </view>
 
       <!-- MODAL 4: User Report Submission Dialog -->
-      <view v-if="modalVisible.report"
+      <view v-if="modalVisible.report" @click="closeModal('report')"
             class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <view class="w-full max-w-xs bg-vox-card rounded-2xl border border-vox-border p-5 space-y-3.5 text-xs">
+        <view @click.stop class="w-full max-w-xs bg-vox-card rounded-2xl border border-vox-border p-5 space-y-3.5 text-xs">
           <view class="flex items-center justify-between">
             <view class="flex items-center gap-1.5 text-amber-400 font-bold text-sm">
               <i class="fa-solid fa-triangle-exclamation"></i>
               <text>违规举报提交</text>
             </view>
-            <view @click="closeModal('report')" class="text-slate-400 hover:text-white cursor-pointer">
-              <i class="fa-solid fa-xmark"></i>
+            <view @click="closeModal('report')" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center active:bg-slate-700 transition">
+              <i class="fa-solid fa-xmark text-xs"></i>
             </view>
           </view>
 
@@ -777,7 +715,7 @@
           <view>
             <text class="block text-slate-300 mb-1">举报类型</text>
             <picker @change="onReportTypeChange" :value="reportTypeIndex" :range="reportTypes">
-              <view class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white flex justify-between items-center">
+                <view class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white flex justify-between items-center h-10 min-h-[40px]">
                 <text>{{ reportTypes[reportTypeIndex] }}</text>
                 <i class="fa-solid fa-chevron-down text-slate-500 text-[10px]"></i>
               </view>
@@ -786,7 +724,7 @@
 
           <view>
             <text class="block text-slate-300 mb-1">详情描述 (选填)</text>
-            <textarea v-model="reportDesc" placeholder="补充具体违规发生的时间或言论细节..."
+            <textarea placeholder-class="input-placeholder" v-model="reportDesc" placeholder="补充具体违规发生的时间或言论细节..."
                       class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white placeholder-slate-500 h-16 text-xs"></textarea>
           </view>
 
@@ -798,13 +736,13 @@
       </view>
 
       <!-- MODAL 5: Room Settings / Host Controls -->
-      <view v-if="modalVisible.roomSettings"
+      <view v-if="modalVisible.roomSettings" @click="closeModal('roomSettings')"
             class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4">
-        <view class="w-full max-w-xs bg-vox-card rounded-t-3xl md:rounded-3xl border border-vox-border p-5 space-y-3.5 text-xs">
+        <view @click.stop class="w-full max-w-xs bg-vox-card rounded-t-3xl md:rounded-3xl border border-vox-border p-5 space-y-3.5 text-xs">
           <view class="flex items-center justify-between">
             <text class="font-bold text-white text-sm">房间管控面板</text>
-            <view @click="closeModal('roomSettings')" class="text-slate-400 hover:text-white cursor-pointer">
-              <i class="fa-solid fa-xmark"></i>
+            <view @click="closeModal('roomSettings')" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center active:bg-slate-700 transition">
+              <i class="fa-solid fa-xmark text-xs"></i>
             </view>
           </view>
 
@@ -837,6 +775,16 @@
               </view>
             </view>
 
+            <!-- Microphone self-test -->
+            <button @click="openMicTest"
+                    class="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 flex items-center justify-between transition m-0">
+              <view class="flex items-center gap-2">
+                <i class="fa-solid fa-microphone-lines text-emerald-400"></i>
+                <text>麦克风测试</text>
+              </view>
+              <text class="text-[10px] text-slate-400">录一段回放</text>
+            </button>
+
             <!-- Close room option -->
             <button @click="closeRoomAsHost"
                     class="w-full py-2.5 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold flex items-center justify-center gap-1.5 transition m-0">
@@ -848,9 +796,9 @@
       </view>
 
       <!-- MODAL 6: Privacy Terms Compliance Modal -->
-      <view v-if="modalVisible.privacy"
+      <view v-if="modalVisible.privacy" @click="closeModal('privacy')"
             class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <view class="w-full max-w-sm bg-vox-card rounded-2xl border border-vox-border p-5 space-y-3 text-xs max-h-[80vh] overflow-y-auto">
+        <view @click.stop class="w-full max-w-sm bg-vox-card rounded-2xl border border-vox-border p-5 space-y-3 text-xs max-h-[80vh] overflow-y-auto">
           <text class="font-bold text-white text-base block">SquadVox 用户协议与隐私保护</text>
           <view class="text-slate-300 space-y-2 text-[11px] leading-relaxed">
             <view><text class="font-bold">1. 数据合规承诺：</text>SquadVox 严格作为第三方游戏组队开黑辅助语音工具，不抓取、不逆向、不篡改《王者荣耀》官方任何底层数据。所有用户段位、分路均由用户自主填报。</view>
@@ -864,9 +812,54 @@
         </view>
       </view>
 
+      <!-- MODAL 7: Microphone Self-Test (录一段自动回放，确认麦克风与扬声器都正常) -->
+      <view v-if="modalVisible.micTest" @click="closeMicTest"
+            class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <view @click.stop class="w-full max-w-xs bg-vox-card rounded-2xl border border-vox-border p-5 space-y-4">
+          <view class="flex items-center justify-between">
+            <view class="flex items-center gap-1.5 text-emerald-400 font-bold text-sm">
+              <i class="fa-solid fa-microphone-lines"></i>
+              <text>麦克风测试</text>
+            </view>
+            <view @click="closeMicTest" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center active:bg-slate-700 transition">
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </view>
+          </view>
+
+          <!-- 状态可视化：录音时复用说话涟漪 -->
+          <view class="flex flex-col items-center justify-center py-2">
+            <view :class="['relative w-20 h-20 rounded-full flex items-center justify-center transition', 
+                           micTestState === 'recording' ? 'bg-rose-500/20 text-rose-400' : (micTestState === 'playing' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400')]">
+              <template v-if="micTestState === 'recording'">
+                <view class="voice-ripple rounded-full"></view>
+                <view class="voice-ripple voice-ripple--delay rounded-full"></view>
+              </template>
+              <i :class="['text-2xl', micTestState === 'playing' ? 'fa-solid fa-volume-high' : 'fa-solid fa-microphone']"></i>
+            </view>
+            <text class="text-sm font-bold text-white mt-3">{{ micTestHint }}</text>
+            <text v-if="micTestState === 'recording'" class="text-xs text-rose-400 font-mono mt-1">
+              {{ micTestSeconds }}s / 最长 10s
+            </text>
+          </view>
+
+          <view class="text-[11px] text-slate-400 leading-relaxed bg-slate-900/60 rounded-xl p-2.5 border border-white/5 space-y-0.5">
+            <text class="block">· 点「开始录音」，对着手机正常说话</text>
+            <text class="block">· 录完自动回放，能听到自己的声音 = 麦克风与扬声器正常</text>
+            <text class="block">· 首次使用会弹出微信麦克风授权</text>
+          </view>
+
+          <button @click="onMicTestAction"
+                  :class="['w-full h-11 rounded-xl font-bold text-xs m-0 border-none leading-normal transition', 
+                          micTestState === 'recording' ? 'bg-rose-500 text-white' : 'bg-gradient-to-r from-emerald-500 to-cyan-400 text-slate-950']">
+            {{ micTestState === 'recording' ? '停止并回放' : (micTestState === 'idle' ? '开始录音' : '重新测试') }}
+          </button>
+        </view>
+      </view>
+
       <!-- TOAST MESSAGE NOTIFICATION -->
       <view v-if="toast.show"
-            class="pointer-events-none fixed top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-slate-900/95 text-white border border-indigo-500/40 text-xs shadow-2xl flex items-center gap-2 transition-opacity duration-300">
+            :style="{ top: (statusBarHeight + 56) + 'px' }"
+            class="pointer-events-none fixed left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-slate-900/95 text-white border border-indigo-500/40 text-xs shadow-2xl flex items-center gap-2 transition-opacity duration-300">
         <i :class="['fa-solid', toast.type === 'error' ? 'fa-circle-xmark text-rose-400' : (toast.type === 'warn' ? 'fa-triangle-exclamation text-amber-400' : 'fa-circle-check text-emerald-400')]"></i>
         <text>{{ toast.message }}</text>
       </view>
@@ -877,7 +870,25 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { listRooms, createRoom, enterRoom, closeRoom, kickMember, sendMessage, saveInfo, submitReport, getSig } from '@/api/index';
+import { onLoad, onShareAppMessage } from '@dcloudio/uni-app';
+import { listRooms, createRoom, enterRoom, closeRoom, kickMember, sendMessage, saveInfo, submitReport, randomProfile } from '@/api/index';
+import { wechatLogin, clearSession, uploadLocalAvatar, saveCachedUser, getCachedUser } from '@/utils/auth';
+
+// ----------------------------------------------------
+// 状态栏 / 安全区高度（真机顶部状态栏 + 底部手势条避让）
+// ----------------------------------------------------
+const statusBarHeight = ref(20);
+const safeAreaBottom = ref(0);
+try {
+  const sysInfo = uni.getSystemInfoSync();
+  statusBarHeight.value = sysInfo.statusBarHeight || 20;
+  if (sysInfo.safeArea && sysInfo.screenHeight != null && sysInfo.safeArea.bottom != null) {
+    safeAreaBottom.value = Math.max(0, sysInfo.screenHeight - sysInfo.safeArea.bottom);
+  }
+} catch (e) {
+  statusBarHeight.value = 20;
+  safeAreaBottom.value = 0;
+}
 
 // ----------------------------------------------------
 // Web Audio API 交互音效发生器 (原型原版移植)
@@ -936,18 +947,9 @@ const toggleSoundFx = () => {
 };
 
 // ----------------------------------------------------
-// 界面显示与时钟仿真
+// 界面显示
 // ----------------------------------------------------
 const isFullscreen = ref(false);
-const mockTime = ref('20:15');
-let clockTimer = null;
-
-const updateMockTime = () => {
-  const now = new Date();
-  const h = String(now.getHours()).padStart(2, '0');
-  const m = String(now.getMinutes()).padStart(2, '0');
-  mockTime.value = `${h}:${m}`;
-};
 
 const toggleDeviceView = () => {
   isFullscreen.value = !isFullscreen.value;
@@ -956,15 +958,17 @@ const toggleDeviceView = () => {
 // ----------------------------------------------------
 // 精美王者游戏头像列表
 // ----------------------------------------------------
+// 头像资源改为本地打包图片（真机上外部域名图片会被「downloadFile合法域名」拦截，
+// 且无法离线加载），统一放在 src/static/avatars 下随包分发。
 const avatarList = [
-  "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80"
+  "/static/avatars/avatar-1.jpg",
+  "/static/avatars/avatar-2.jpg",
+  "/static/avatars/avatar-3.jpg",
+  "/static/avatars/avatar-4.jpg",
+  "/static/avatars/avatar-5.jpg",
+  "/static/avatars/avatar-6.jpg",
+  "/static/avatars/avatar-7.jpg",
+  "/static/avatars/avatar-8.jpg"
 ];
 
 // ----------------------------------------------------
@@ -1036,104 +1040,94 @@ const setFilter = (type, val) => {
   currentFilters.value[type] = val;
 };
 
-// 模拟完整王者荣耀车队房间数据 (同高保真原型)
-const mockRooms = ref([
-  {
-    id: 1,
-    roomNo: 'SV-9921',
-    ownerId: 101,
-    ownerName: '野区霸王',
-    ownerRank: '荣耀王者 68星',
-    ownerAvatar: avatarList[1],
-    name: '冲星王者5排速推房',
-    type: '5排',
-    maxNum: 5,
-    tag: '冲分上星',
-    hasPassword: false,
-    password: '',
-    members: [
-      { id: 101, name: '野区霸王', isHost: true, avatar: avatarList[1], rank: '荣耀王者 68星', position: '打野', isSpeaking: true, micOpen: true },
-      { id: 102, name: '瑶妹想混分', isHost: false, avatar: avatarList[2], rank: '至尊星耀 I', position: '游走', isSpeaking: false, micOpen: true },
-      { id: 103, name: '通天边路斩', isHost: false, avatar: avatarList[3], rank: '无双王者 32星', position: '对抗路', isSpeaking: false, micOpen: true },
-      { id: 104, name: '中路绝不亏兵', isHost: false, avatar: avatarList[4], rank: '最强王者 18星', position: '中路', isSpeaking: false, micOpen: false }
-    ]
-  },
-  {
-    id: 2,
-    roomNo: 'SV-8832',
-    ownerId: 201,
-    ownerName: '下饭老黄瓜',
-    ownerRank: '至尊星耀 III',
-    ownerAvatar: avatarList[5],
-    name: '3排娱乐欢乐局，麦克风开聊',
-    type: '3排',
-    maxNum: 3,
-    tag: '欢乐娱乐',
-    hasPassword: false,
-    password: '',
-    members: [
-      { id: 201, name: '下饭老黄瓜', isHost: true, avatar: avatarList[5], rank: '至尊星耀 III', position: '中路', isSpeaking: true, micOpen: true },
-      { id: 202, name: '草丛三剑客', isHost: false, avatar: avatarList[6], rank: '至尊星耀 IV', position: '游走', isSpeaking: false, micOpen: true }
-    ]
-  },
-  {
-    id: 3,
-    roomNo: 'SV-7719',
-    ownerId: 301,
-    ownerName: '国服露娜教学',
-    ownerRank: '传奇王者 102星',
-    ownerAvatar: avatarList[7],
-    name: '高端车队密码房 (私信进)',
-    type: '5排',
-    maxNum: 5,
-    tag: '冲分上星',
-    hasPassword: true,
-    password: '666',
-    members: [
-      { id: 301, name: '国服露娜教学', isHost: true, avatar: avatarList[7], rank: '传奇王者 102星', position: '打野', isSpeaking: false, micOpen: true },
-      { id: 302, name: '大射手后羿', isHost: false, avatar: avatarList[2], rank: '荣耀王者 70星', position: '发育路', isSpeaking: false, micOpen: true }
-    ]
-  },
-  {
-    id: 4,
-    roomNo: 'SV-6601',
-    ownerId: 401,
-    ownerName: '练习生小阿朵',
-    ownerRank: '永恒钻石 I',
-    ownerAvatar: avatarList[2],
-    name: '情侣2排/新英雄熟练度练习',
-    type: '2排',
-    maxNum: 2,
-    tag: '练新英雄',
-    hasPassword: false,
-    password: '',
-    members: [
-      { id: 401, name: '练习生小阿朵', isHost: true, avatar: avatarList[2], rank: '永恒钻石 I', position: '对抗路', isSpeaking: true, micOpen: true }
-    ]
-  },
-  {
-    id: 5,
-    roomNo: 'SV-5520',
-    ownerId: 501,
-    ownerName: '巅峰赛狙击手',
-    ownerRank: '荣耀王者 55星',
-    ownerAvatar: avatarList[3],
-    name: '微信区5排来个抗压肉边',
-    type: '5排',
-    maxNum: 5,
-    tag: '冲分上星',
-    hasPassword: false,
-    password: '',
-    members: [
-      { id: 501, name: '巅峰赛狙击手', isHost: true, avatar: avatarList[3], rank: '荣耀王者 55星', position: '打野', isSpeaking: false, micOpen: true },
-      { id: 502, name: '不知火舞本火', isHost: false, avatar: avatarList[4], rank: '无双王者 39星', position: '中路', isSpeaking: false, micOpen: true },
-      { id: 503, name: '孙尚香暴击流', isHost: false, avatar: avatarList[0], rank: '荣耀王者 61星', position: '发育路', isSpeaking: true, micOpen: true }
-    ]
+const roomList = ref([]);
+
+const fetchRooms = async () => {
+  try {
+    const { data } = await listRooms();
+    if (data) {
+      roomList.value = data.map(r => ({
+        id: r.id,
+        roomNo: r.room_no,
+        ownerId: r.owner_id || 0,
+        ownerName: r.owner_nickname || '未知',
+        ownerRank: r.owner_rank || '未知',
+        ownerAvatar: r.owner_avatar || avatarList[0],
+        name: r.room_name,
+        type: r.room_type,
+        maxNum: r.max_num,
+        tag: r.tag,
+        hasPassword: !!r.is_encrypted,
+        members: Array(r.current_num || 1).fill({ isSpeaking: false, micOpen: true })
+      }));
+    }
+  } catch (err) {
+    console.error('Failed to fetch rooms', err);
   }
-]);
+};
+
+// 把服务端返回的用户资料合并进本地状态（登录 / 切换账号 / 拉取资料都走这里）
+const applyServerUser = (d) => {
+  if (!d) return;
+  currentUser.value = {
+    ...currentUser.value,
+    id: d.id != null ? d.id : currentUser.value.id,
+    openid: d.wx_openid || currentUser.value.openid || '',
+    nickname: d.nickname || currentUser.value.nickname,
+    avatar: d.avatar || currentUser.value.avatar,
+    region: d.game_area || currentUser.value.region,
+    server: d.game_server || currentUser.value.server,
+    gameId: d.game_id || currentUser.value.gameId,
+    rank: d.rank || currentUser.value.rank,
+    positions: d.position ? String(d.position).split('/').filter(Boolean) : currentUser.value.positions
+  };
+  saveCachedUser(currentUser.value);
+};
+
+const loadUserProfile = () => {
+  getInfo()
+    .then((res) => { if (res && res.data) applyServerUser(res.data); })
+    .catch((e) => console.error('[SquadVox] 拉取用户资料失败:', e));
+};
+
+// 登录后跳转过来时会带 ?tab=profile，用于引导完成头像昵称授权
+onLoad((options) => {
+  const tab = options && options.tab;
+  
+  if (options && options.action === 'join' && options.roomNo) {
+    // Attempt to join room from share link
+    setTimeout(() => {
+      joinRoomByNo(options.roomNo);
+    }, 1000);
+  }
+
+  if (!tab || !['lobby', 'room', 'profile'].includes(tab)) return;
+  if (tab === 'room' && !activeRoom.value) return;
+  currentTab.value = tab;
+});
+
+// Setup Share App Message
+onShareAppMessage(() => {
+  if (currentTab.value === 'room' && activeRoom.value) {
+    return {
+      title: `我所在的语聊房「${activeRoom.value.name}」缺人，快来上麦！`,
+      path: `/pages/index/index?roomNo=${activeRoom.value.roomNo}&action=join`,
+      imageUrl: '' // You can place a default share cover image here if available
+    }
+  }
+  return {
+    title: 'SquadVox - 寻找默契游戏队友',
+    path: '/pages/index/index'
+  }
+});
+
+onMounted(() => {
+  fetchRooms();
+  loadUserProfile();
+});
 
 const filteredRooms = computed(() => {
-  return mockRooms.value.filter(room => {
+  return roomList.value.filter(room => {
     const matchType = currentFilters.value.type === 'all' || room.type === currentFilters.value.type;
     const matchTag = currentFilters.value.tag === 'all' || room.tag === currentFilters.value.tag;
     return matchType && matchTag;
@@ -1167,11 +1161,18 @@ const currentSpeaker = computed(() => {
   return activeRoom.value.members.find(m => m.isSpeaking && m.micOpen && !isAllMutedByHost.value);
 });
 
+// 指定麦位是否正在说话（用于渲染头像外圈的涟漪环）
+const isSeatSpeaking = (index) => {
+  const m = activeRoom.value && activeRoom.value.members[index];
+  return !!(m && m.isSpeaking && m.micOpen && !isAllMutedByHost.value);
+};
+
 // 房间弹幕聊天
 const chatMessages = ref([
   { isSystem: true, sender: '系统', content: '欢迎进入 SquadVox，开麦畅爽沟通！' }
 ]);
 const chatInputText = ref('');
+const chatInputFocused = ref(false);
 const quickPhrases = ['我打野带飞', '缺个硬辅开团', '稳住后期接团', '测试麦克风'];
 
 const sendQuickChat = (phrase) => {
@@ -1225,6 +1226,16 @@ const submitVerifyPassword = () => {
   }
 };
 
+const joinRoomByNo = (roomNo) => {
+  const room = roomList.value.find(r => r.roomNo === roomNo);
+  if (room) {
+    requestEnterRoom(room);
+    currentTab.value = 'room';
+  } else {
+    showToast('该语音房已解散或不存在', 'error');
+  }
+};
+
 const executeJoinRoom = (room) => {
   if (activeRoom.value && activeRoom.value.id !== room.id) {
     activeRoom.value.members = activeRoom.value.members.filter(m => m.id !== currentUser.value.id);
@@ -1261,10 +1272,21 @@ const executeJoinRoom = (room) => {
 const leaveRoomConfirm = () => {
   if (!activeRoom.value) return;
   const roomTitle = activeRoom.value.name;
-  activeRoom.value.members = activeRoom.value.members.filter(m => m.id !== currentUser.value.id);
-  activeRoom.value = null;
-  showToast(`已退出房间: ${roomTitle}`, 'info');
-  switchTab('lobby');
+  // 退出房间属于不可撤销操作，先二次确认
+  uni.showModal({
+    title: '退出房间',
+    content: `确定要退出「${roomTitle}」吗？退出后需要重新加入。`,
+    confirmText: '退出',
+    cancelText: '再想想',
+    success: (res) => {
+      if (!res.confirm) return;
+      activeRoom.value.members = activeRoom.value.members.filter(m => m.id !== currentUser.value.id);
+      activeRoom.value = null;
+      // 退出后房间标签页已无意义，回到大厅
+      currentTab.value = 'lobby';
+      showToast(`已退出房间: ${roomTitle}`, 'info');
+    }
+  });
 };
 
 // 麦克风与扬声器切换
@@ -1322,7 +1344,8 @@ const modalVisible = ref({
   memberDetail: false,
   report: false,
   roomSettings: false,
-  privacy: false
+  privacy: false,
+  micTest: false
 });
 
 const openModal = (name) => {
@@ -1356,6 +1379,12 @@ const openCreateRoomModal = () => {
 };
 
 const handleCreateRoomSubmit = async () => {
+  const roomName = createForm.value.name.trim();
+  if (!roomName) {
+    showToast('请先填写车队名称', 'warn');
+    return;
+  }
+
   const newRoom = {
     id: Date.now(),
     roomNo: 'SV-' + Math.floor(1000 + Math.random() * 9000),
@@ -1363,7 +1392,7 @@ const handleCreateRoomSubmit = async () => {
     ownerName: currentUser.value.nickname,
     ownerRank: currentUser.value.rank,
     ownerAvatar: currentUser.value.avatar,
-    name: createForm.value.name.trim() || '我的王者开黑车队',
+    name: roomName,
     type: createForm.value.type,
     maxNum: createForm.value.maxNum,
     tag: createForm.value.tag,
@@ -1383,8 +1412,10 @@ const handleCreateRoomSubmit = async () => {
     ]
   };
 
-  mockRooms.value.unshift(newRoom);
+  roomList.value.unshift(newRoom);
   closeModal('createRoom');
+  // 表单复位，避免下次打开还是上次的密码/名称
+  createForm.value.password = '';
 
   // 同步请求本地 API (若服务在线)
   try {
@@ -1407,10 +1438,16 @@ const openAvatarModal = () => {
   openModal('avatarSelect');
 };
 
-const selectAvatar = (av) => {
+const selectAvatar = async (av) => {
   currentUser.value.avatar = av;
   closeModal('avatarSelect');
+  saveCachedUser(currentUser.value);
   showToast('已更新游戏展示头像', 'success');
+  try {
+    await saveInfo({ avatar: av }); // 立即落库
+  } catch (e) {
+    // 离线也不阻塞交互
+  }
 };
 
 // 成员详情与管控
@@ -1424,14 +1461,24 @@ const openMemberDetailModal = (member) => {
 const handleKickMember = () => {
   if (!activeRoom.value || !selectedMember.value) return;
   const target = selectedMember.value;
-  activeRoom.value.members = activeRoom.value.members.filter(m => m.id !== target.id);
-  closeModal('memberDetail');
-  chatMessages.value.push({
-    isSystem: true,
-    sender: '系统',
-    content: `房主已将 [${target.name}] 移出房间`
+  // 踢人不可撤销，先确认
+  uni.showModal({
+    title: '移出队员',
+    content: `确定将「${target.name}」移出车队吗？`,
+    confirmText: '移出',
+    cancelText: '取消',
+    success: (res) => {
+      if (!res.confirm) return;
+      activeRoom.value.members = activeRoom.value.members.filter(m => m.id !== target.id);
+      closeModal('memberDetail');
+      chatMessages.value.push({
+        isSystem: true,
+        sender: '系统',
+        content: `房主已将 [${target.name}] 移出房间`
+      });
+      showToast(`已踢出队员: ${target.name}`, 'info');
+    }
   });
-  showToast(`已踢出队员: ${target.name}`, 'info');
 };
 
 // 举报弹窗
@@ -1486,12 +1533,29 @@ const toggleMuteAllMembers = () => {
 
 const closeRoomAsHost = async () => {
   if (!activeRoom.value) return;
-  const rId = activeRoom.value.id;
-  closeModal('roomSettings');
-  mockRooms.value = mockRooms.value.filter(r => r.id !== rId);
-  activeRoom.value = null;
-  showToast('房间已解散，释放 TRTC 资源与服务器缓存', 'info');
-  switchTab('lobby');
+  const roomTitle = activeRoom.value.name;
+  // 解散房间影响所有队员，必须二次确认
+  uni.showModal({
+    title: '解散房间',
+    content: `确定要解散「${roomTitle}」吗？房间内所有队员都会被移出。`,
+    confirmText: '解散',
+    confirmColor: '#f43f5e',
+    cancelText: '取消',
+    success: async (res) => {
+      if (!res.confirm) return;
+      closeModal('roomSettings');
+      try {
+        await closeRoom({ room_no: activeRoom.value.roomNo });
+      } catch (e) {
+        // 服务端失败也要让本地状态归位，避免卡在半死状态
+        console.error('[SquadVox] 关闭房间失败:', e);
+      }
+      activeRoom.value = null;
+      currentTab.value = 'lobby';
+      await fetchRooms();
+      showToast('房间已解散', 'info');
+    }
+  });
 };
 
 // 隐私合规协议
@@ -1532,8 +1596,223 @@ const saveUserProfile = async () => {
   } catch (e) {}
 };
 
-const triggerWechatAuthSwitch = () => {
-  showToast('已切换至当前微信授权身份', 'info');
+// ----------------------------------------------------
+// 微信资料授权 / 切换账号（闭环）
+// ----------------------------------------------------
+const maskedOpenid = computed(() => {
+  const o = currentUser.value.openid || '';
+  if (!o) return 'openid 未获取';
+  return o.length > 12 ? `${o.slice(0, 6)}…${o.slice(-4)}` : o;
+});
+
+const isProfileAuthorized = computed(() => {
+  const u = currentUser.value;
+  return !!(u.nickname && u.avatar);
+});
+
+// 微信官方头像授权回调：拿到的是临时文件，先抓取上传再落库
+const onChooseAvatar = async (e) => {
+  const filePath = e && e.detail && e.detail.avatarUrl;
+  if (!filePath) return;
+
+  uni.showLoading({ title: '上传头像中...', mask: true });
+  try {
+    const url = await uploadLocalAvatar(filePath);
+    currentUser.value.avatar = url;
+    await saveInfo({ avatar: url }); // 立即落库，避免用户忘了点保存
+    saveCachedUser(currentUser.value);
+    uni.hideLoading();
+    showToast('微信头像已更新', 'success');
+  } catch (err) {
+    uni.hideLoading();
+    console.error('[SquadVox] 头像上传失败:', err);
+    showToast('头像上传失败，请重试', 'error');
+  }
+};
+
+const saveWechatProfile = async () => {
+  const nick = String(currentUser.value.nickname || '').trim();
+  if (!nick) {
+    showToast('请先填写或获取微信昵称', 'warn');
+    return;
+  }
+  uni.showLoading({ title: '保存中...', mask: true });
+  try {
+    await saveInfo({ nickname: nick, avatar: currentUser.value.avatar });
+    saveCachedUser(currentUser.value);
+    uni.hideLoading();
+    showToast('微信资料已保存', 'success');
+  } catch (e) {
+    uni.hideLoading();
+  }
+};
+
+// 随机生成一套王者荣耀风格的开黑名片（昵称 + 头像由服务端词库产出）
+const randomizeProfile = async () => {
+  uni.showLoading({ title: '生成中...', mask: true });
+  try {
+    const { data } = await randomProfile();
+    currentUser.value.nickname = data.nickname;
+    currentUser.value.avatar = data.avatar;
+    saveCachedUser(currentUser.value);
+    uni.hideLoading();
+    showToast(`已生成：${data.nickname}`, 'success');
+  } catch (e) {
+    uni.hideLoading();
+    showToast('生成失败，请重试', 'error');
+  }
+};
+
+// 切换微信：清会话 -> 重新 uni.login -> 用新 openid 拉回身份
+const switchWechatAccount = () => {
+  uni.showModal({
+    title: '切换微信账号',
+    content: '将清除当前登录状态并重新授权。若要换成另一个微信号，请先在微信里切换账号再继续。',
+    confirmText: '重新授权',
+    cancelText: '取消',
+    success: async (res) => {
+      if (!res.confirm) return;
+      uni.showLoading({ title: '重新授权中...', mask: true });
+      try {
+        clearSession();
+        const data = await wechatLogin();
+        applyServerUser(data && data.user);
+        await fetchRooms();
+        uni.hideLoading();
+        showToast(`已切换为 ${currentUser.value.nickname}`, 'success');
+      } catch (err) {
+        uni.hideLoading();
+        console.error('[SquadVox] 切换微信失败:', err);
+        showToast('切换失败，请重试', 'error');
+      }
+    }
+  });
+};
+
+// ----------------------------------------------------
+// 麦克风自测：录音 → 自动回放（首次会触发微信麦克风授权）
+// ----------------------------------------------------
+const micTestState = ref('idle'); // idle | recording | playing | done
+const micTestSeconds = ref(0);
+let micRecorder = null;
+let micAudio = null;
+let micTimer = null;
+
+const micTestHint = computed(() => {
+  if (micTestState.value === 'recording') return '正在录音，请对着手机说话…';
+  if (micTestState.value === 'playing') return '正在回放…';
+  if (micTestState.value === 'done') return '听到自己的声音了吗？';
+  return '准备就绪';
+});
+
+const stopMicTimer = () => {
+  if (micTimer) {
+    clearInterval(micTimer);
+    micTimer = null;
+  }
+};
+
+const getMicRecorder = () => {
+  if (micRecorder) return micRecorder;
+
+  micRecorder = uni.getRecorderManager();
+
+  micRecorder.onStop((res) => {
+    stopMicTimer();
+    if (!res || !res.tempFilePath) {
+      micTestState.value = 'idle';
+      showToast('没有录到音频，请重试', 'error');
+      return;
+    }
+    micTestState.value = 'playing';
+    try {
+      if (!micAudio) micAudio = uni.createInnerAudioContext();
+      micAudio.src = res.tempFilePath;
+      micAudio.onEnded(() => { micTestState.value = 'done'; });
+      micAudio.onError(() => { micTestState.value = 'done'; showToast('回放失败，请检查媒体音量', 'error'); });
+      micAudio.play();
+    } catch (e) {
+      micTestState.value = 'done';
+    }
+  });
+
+  micRecorder.onError((err) => {
+    stopMicTimer();
+    micTestState.value = 'idle';
+    console.error('[SquadVox] 录音失败:', err);
+    showToast('录音失败，请检查麦克风权限', 'error');
+  });
+
+  return micRecorder;
+};
+
+const openMicTest = () => {
+  micTestState.value = 'idle';
+  micTestSeconds.value = 0;
+  openModal('micTest');
+};
+
+const doStartMicRecording = () => {
+  micTestState.value = 'recording';
+  micTestSeconds.value = 0;
+  stopMicTimer();
+  micTimer = setInterval(() => {
+    micTestSeconds.value += 1;
+    if (micTestSeconds.value >= 10) stopMicRecording(); // 最长 10 秒自动停
+  }, 1000);
+
+  try {
+    getMicRecorder().start({
+      duration: 10000,
+      format: 'mp3',
+      sampleRate: 16000,
+      numberOfChannels: 1,
+      encodeBitRate: 48000
+    });
+  } catch (e) {
+    stopMicTimer();
+    micTestState.value = 'idle';
+    console.error('[SquadVox] 录音启动失败:', e);
+    showToast('当前环境不支持录音，请在微信小程序中测试', 'error');
+  }
+};
+
+const stopMicRecording = () => {
+  stopMicTimer();
+  try { getMicRecorder().stop(); } catch (e) {}
+};
+
+const onMicTestAction = () => {
+  if (micTestState.value === 'recording') {
+    stopMicRecording();
+    return;
+  }
+  // 先申请麦克风授权；被拒过就走 openSetting 引导
+  if (typeof uni.authorize !== 'function') {
+    doStartMicRecording();
+    return;
+  }
+  uni.authorize({
+    scope: 'scope.record',
+    success: () => doStartMicRecording(),
+    fail: () => {
+      uni.showModal({
+        title: '需要麦克风权限',
+        content: '请在设置中打开「麦克风」权限后重试',
+        confirmText: '去设置',
+        cancelText: '取消',
+        success: (r) => { if (r.confirm) uni.openSetting({}); }
+      });
+    }
+  });
+};
+
+const closeMicTest = () => {
+  stopMicTimer();
+  try { if (micRecorder) micRecorder.stop(); } catch (e) {}
+  try { if (micAudio) micAudio.stop(); } catch (e) {}
+  micTestState.value = 'idle';
+  closeModal('micTest');
 };
 
 // ----------------------------------------------------
@@ -1560,11 +1839,8 @@ const showToast = (message, type = 'success') => {
 let simulateSpeakingTimer = null;
 
 onMounted(() => {
-  updateMockTime();
-  clockTimer = setInterval(updateMockTime, 30000);
-
-  // 加载缓存
-  const cachedUser = uni.getStorageSync('userInfo');
+  // 先用本地缓存渲染，避免白屏；随后 loadUserProfile 会用服务端数据覆盖
+  const cachedUser = getCachedUser();
   if (cachedUser && cachedUser.nickname) {
     currentUser.value = { ...currentUser.value, ...cachedUser };
   }
@@ -1583,7 +1859,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (clockTimer) clearInterval(clockTimer);
   if (simulateSpeakingTimer) clearInterval(simulateSpeakingTimer);
 });
 </script>
