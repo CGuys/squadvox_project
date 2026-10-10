@@ -206,7 +206,7 @@
           </view>
 
           <!-- Main Scrollable Area -->
-          <scroll-view scroll-y class="flex-1 relative z-10" :style="{ paddingBottom: (80 + safeAreaBottom) + 'px' }">
+          <scroll-view scroll-y class="flex-1 relative z-10" :style="{ paddingBottom: (100 + safeAreaBottom) + 'px' }">
             
             <!-- Seats Area -->
             <view class="mt-6 px-4">
@@ -219,7 +219,7 @@
                   </template>
                   <view :class="['relative w-20 h-20 rounded-full border-2 overflow-hidden transition shadow-lg', 
                                 isSeatSpeaking(0) ? 'voice-glow border-emerald-400' : 'border-amber-400 shadow-amber-500/30']">
-                    <image :src="activeRoom.members[0].avatar" class="w-full h-full object-cover" />
+                    <image :src="activeRoom.members[0].avatar" class="w-full h-full object-cover rounded-full" />
                   </view>
                   <view :class="['absolute bottom-11 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-[10px] shadow-md border-2 border-slate-900', 
                                 (activeRoom.members[0].micOpen && !isAllMutedByHost) ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-rose-400']">
@@ -244,7 +244,7 @@
                       </template>
                       <view :class="['relative w-14 h-14 rounded-full border-2 overflow-hidden transition shadow-md', 
                                     isSeatSpeaking(i) ? 'voice-glow border-emerald-400' : 'border-indigo-400/80 shadow-indigo-500/20']">
-                        <image :src="activeRoom.members[i].avatar" class="w-full h-full object-cover" />
+                        <image :src="activeRoom.members[i].avatar" class="w-full h-full object-cover rounded-full" />
                       </view>
                       <view :class="['absolute bottom-9 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[8px] shadow-sm border-2 border-slate-900', 
                                     (activeRoom.members[i].micOpen && !isAllMutedByHost) ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-rose-400']">
@@ -278,7 +278,7 @@
                 <!-- Chat Bubble -->
                 <view class="flex items-start gap-2">
                   <view v-if="!chat.isSystem" class="w-7 h-7 rounded-full overflow-hidden shrink-0 mt-0.5 border border-white/10">
-                    <image :src="activeRoom.members.find(m => m && m.name === chat.sender)?.avatar || '/static/default-avatar.png'" class="w-full h-full object-cover" />
+                    <image :src="activeRoom.members.find(m => m && m.name === chat.sender)?.avatar || '/static/default-avatar.png'" class="w-full h-full object-cover rounded-full" />
                   </view>
                   <view class="bg-white/10 rounded-2xl rounded-tl-sm px-3 py-2 border border-white/5 max-w-[85%] backdrop-blur-md">
                     <view class="flex items-center gap-1.5 mb-0.5">
@@ -292,7 +292,7 @@
           </scroll-view>
 
           <!-- Bottom Fixed Input Bar -->
-          <view class="absolute bottom-0 left-0 right-0 px-4 pt-3 pb-[env(safe-area-inset-bottom)] bg-gradient-to-t from-black via-black/80 to-transparent flex items-center gap-3 z-20" :style="{ paddingBottom: Math.max(12, safeAreaBottom) + 'px' }">
+          <view class="absolute bottom-0 left-0 right-0 px-4 pt-3 pb-4 bg-slate-950/90 backdrop-blur-md flex items-center gap-3 z-20 border-t border-white/5" :style="{ paddingBottom: (safeAreaBottom || 16) + 'px' }">
             <!-- Big Mic Toggle -->
             <button @click="toggleMyMic" :class="['w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white m-0 p-0 border shadow-lg transition active:scale-95', currentUser.isMicOn ? 'bg-fuchsia-600 border-fuchsia-400 shadow-fuchsia-500/50' : 'bg-slate-800 border-slate-600 shadow-slate-900/50']">
               <i :class="['text-sm', currentUser.isMicOn ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash']"></i>
@@ -343,7 +343,7 @@
 
             <view class="flex items-center gap-3">
               <!-- 微信官方头像授权：open-type="chooseAvatar" -->
-              <button open-type="chooseAvatar" @chooseavatar="onChooseAvatar"
+              <button open-type="chooseAvatar" @chooseavatar="onChooseAvatar" @click="onAvatarClick"
                       class="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-indigo-500/50 shrink-0 m-0 p-0 bg-transparent leading-normal">
                 <image :src="currentUser.avatar || '/static/default-avatar.png'"
                        class="w-16 h-16 rounded-2xl object-cover" />
@@ -461,6 +461,28 @@
                        currentUser.isMicOn ? 'bg-emerald-400 text-slate-950' : 'bg-rose-500 text-white']">
           <i :class="currentUser.isMicOn ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash'"></i>
         </view>
+      </view>
+
+
+      <!-- TRTC 实时语音原生组件 (仅支持真机) -->
+      <view class="fixed -left-[999px] -top-[999px] w-1 h-1 overflow-hidden" v-if="trtcPushUrl">
+        <live-pusher
+          id="trtc-pusher"
+          mode="RTC"
+          :url="trtcPushUrl"
+          :autopush="true"
+          :enable-camera="false"
+          :enable-mic="currentUser.isMicOn"
+          @statechange="onTrtcStateChange"
+        ></live-pusher>
+        <live-player
+          v-for="p in trtcPlayerList"
+          :key="p.id"
+          :id="p.id"
+          mode="RTC"
+          :src="p.url"
+          :autoplay="true"
+        ></live-player>
       </view>
 
       <!-- ============================================== -->
@@ -798,8 +820,8 @@
               <text class="text-[10px] text-slate-400">录一段回放</text>
             </button>
 
-            <!-- Close room option -->
-            <button @click="closeRoomAsHost"
+            <!-- Close room option (HOST ONLY) -->
+            <button v-if="activeRoom && activeRoom.ownerId === currentUser.id" @click="closeRoomAsHost"
                     class="w-full py-2.5 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold flex items-center justify-center gap-1.5 transition m-0">
               <i class="fa-solid fa-trash-can"></i>
               <text>解散并关闭房间 (/squadvox/api/room/close)</text>
@@ -884,8 +906,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app';
-import { listRooms, createRoom, enterRoom, closeRoom, kickMember, sendMessage, saveInfo, submitReport, randomProfile } from '@/api/index';
-import { wechatLogin, clearSession, uploadLocalAvatar, saveCachedUser, getCachedUser } from '@/utils/auth';
+import { listRooms, createRoom, enterRoom, closeRoom, kickMember, sendMessage, saveInfo, submitReport, randomProfile, getSig } from '@/api/index';
+import { wechatLogin, clearSession, uploadLocalAvatar, saveCachedUser, getCachedUser, formatAvatar } from '@/utils/auth';
 
 // ----------------------------------------------------
 // 状态栏 / 安全区高度（真机顶部状态栏 + 底部手势条避让）
@@ -1055,6 +1077,40 @@ const setFilter = (type, val) => {
 
 const roomList = ref([]);
 
+
+// ----------------------------------------------------
+// TRTC 实时语音核心逻辑
+// ----------------------------------------------------
+const trtcConfig = ref(null);
+const trtcPushUrl = ref('');
+const trtcPlayerList = ref([]);
+
+const setupTrtcVoice = async (room) => {
+  try {
+    const { data } = await getSig();
+    trtcConfig.value = data;
+    // 构建微信 TRTC 的专用 room:// 协议推流地址
+    const pushUrl = `room://cloud.tencent.com/rtc?sdkappid=${data.sdkAppId}&roomid=${room.roomNo}&userid=${data.userId}&usersig=${data.userSig}&appscene=audiocall&cloudenv=PRO`;
+    trtcPushUrl.value = pushUrl;
+  } catch (err) {
+    showToast('TRTC 通道建立失败', 'error');
+  }
+};
+
+const clearTrtcVoice = () => {
+  trtcPushUrl.value = '';
+  trtcPlayerList.value = [];
+};
+
+const onTrtcStateChange = (e) => {
+  console.log('TRTC Pusher State:', e.detail.code, e.detail.message);
+  // 当房间有人进出时，1020 是系统通知的特定 code，或者是 pusher 返回的 remote stream 变更
+  if (e.detail.code === 1020) {
+    // 解析下发的内容来动态更新 playerList 
+    //（因涉及到复杂解析，通常用 trtc-wx-sdk 处理，这里放一个钩子证明打通）
+  }
+};
+
 const fetchRooms = async () => {
   try {
     const { data } = await listRooms();
@@ -1071,7 +1127,15 @@ const fetchRooms = async () => {
         maxNum: r.max_num,
         tag: r.tag,
         hasPassword: !!r.is_encrypted,
-        members: Array(r.current_num || 1).fill({ isSpeaking: false, micOpen: true })
+        members: [{
+          id: r.owner_id || 0,
+          name: r.owner_nickname || '未知',
+          rank: r.owner_rank || '未知',
+          avatar: formatAvatar(r.owner_avatar || avatarList[0]),
+          isHost: true,
+          isSpeaking: false,
+          micOpen: true
+        }]
       }));
     }
   } catch (err) {
@@ -1274,6 +1338,7 @@ const executeJoinRoom = (room) => {
 
   soundJoinRoom();
   showToast(`已连入语音房: ${room.name}`, 'success');
+  setupTrtcVoice(room);
 
   chatMessages.value.push({
     isSystem: true,
@@ -1297,6 +1362,7 @@ const leaveRoomConfirm = () => {
       if (!res.confirm) return;
       activeRoom.value.members = activeRoom.value.members.filter(m => m.id !== currentUser.value.id);
       activeRoom.value = null;
+      clearTrtcVoice();
       // 退出后房间标签页已无意义，回到大厅
       currentTab.value = 'lobby';
       showToast(`已退出房间: ${roomTitle}`, 'info');
@@ -1641,23 +1707,41 @@ const syncCurrentUserToRoom = () => {
   }
 };
 
-const onChooseAvatar = async (e) => {
-  const filePath = e && e.detail && e.detail.avatarUrl;
+const handleAvatarUpload = async (filePath) => {
   if (!filePath) return;
-
   uni.showLoading({ title: '上传头像中...', mask: true });
   try {
     const url = await uploadLocalAvatar(filePath);
     currentUser.value.avatar = url;
-    await saveInfo({ avatar: url }); // 立即落库，避免用户忘了点保存
+    await saveInfo({ avatar: url }); // 立即落库
     saveCachedUser(currentUser.value);
     syncCurrentUserToRoom();
     uni.hideLoading();
-    showToast('微信头像已更新', 'success');
+    showToast('头像已更新', 'success');
   } catch (err) {
     uni.hideLoading();
     console.error('[SquadVox] 头像上传失败:', err);
     showToast('头像上传失败，请重试', 'error');
+  }
+};
+
+const onAvatarClick = () => {
+  // #ifdef H5
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    success: (res) => {
+      const filePath = res.tempFilePaths[0];
+      handleAvatarUpload(filePath);
+    }
+  });
+  // #endif
+};
+
+const onChooseAvatar = (e) => {
+  const filePath = e && e.detail && e.detail.avatarUrl;
+  if (filePath) {
+    handleAvatarUpload(filePath);
   }
 };
 

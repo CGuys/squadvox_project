@@ -47,7 +47,7 @@ exports.listRooms = async (req, res) => {
   try {
     const { room_type, tag } = req.query;
     let query = `
-      SELECT r.id, r.room_no, r.room_name, r.room_type, r.tag, r.max_num, 
+      SELECT r.id, r.room_no, r.room_name, r.room_type, r.tag, r.max_num, r.owner_id, 
       IF(r.room_pwd = '', 0, 1) as is_encrypted, 
       u.nickname as owner_nickname, u.avatar as owner_avatar, u.rank as owner_rank
       FROM room r
@@ -70,10 +70,10 @@ exports.listRooms = async (req, res) => {
     const [rows] = await db.execute(query, queryParams);
     
     // 实际项目中还需查询redis统计当前在线人数等
-    // Mock current_num for the prototype display
+    // Default current_num to 1 since we aren't tracking real-time redis participants yet
     const mappedRows = rows.map(r => ({
       ...r,
-      current_num: Math.floor(Math.random() * (r.max_num)) + 1
+      current_num: 1
     }));
 
     res.json({

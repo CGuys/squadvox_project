@@ -222,17 +222,14 @@ exports.uploadAvatar = async (req, res) => {
         secure: true
       });
       const result = await client.put(filename, buf);
-      url = result.url;
-      if (url && url.startsWith('http://')) {
-        url = url.replace('http://', 'https://');
-      }
+      url = filename; // Only save path
     } else {
       if (!fs.existsSync(UPLOAD_DIR)) {
         fs.mkdirSync(UPLOAD_DIR, { recursive: true });
       }
       const localFilename = filename.split('/').pop();
       fs.writeFileSync(require('path').join(UPLOAD_DIR, localFilename), buf);
-      url = `${req.protocol}://${req.headers.host}/uploads/${localFilename}`;
+      url = `uploads/${localFilename}`; // Only save path
     }
 
     res.json({ code: 200, msg: '头像上传成功', data: { url } });

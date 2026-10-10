@@ -81,6 +81,15 @@ export const wechatLogin = () => {
 // chooseAvatar / chooseImage 给出的是 wxfile:// 临时路径，
 // 重启即失效，必须把文件内容取出来回传持久化。
 // ------------------------------------------------------------
+export const OSS_BASE_URL = 'https://squadvox-project.oss-cn-beijing.aliyuncs.com/';
+
+export const formatAvatar = (url) => {
+  if (!url) return '/static/default-avatar.png';
+  if (url.startsWith('http') || url.startsWith('/static')) return url;
+  if (url.startsWith('avatars/') || url.startsWith('uploads/')) return OSS_BASE_URL + url;
+  return OSS_BASE_URL + url;
+};
+
 export const uploadLocalAvatar = (filePath) => {
   return new Promise((resolve, reject) => {
     if (!filePath) {
