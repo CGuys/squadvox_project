@@ -208,16 +208,32 @@ exports.uploadAvatar = async (req, res) => {
       return res.status(400).json({ code: 400, msg: '图片过大（限 2MB）' });
     }
 
-    if (!fs.existsSync(UPLOAD_DIR)) {
-      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-    }
-
     const ext = matched[1] === 'jpeg' ? 'jpg' : matched[1];
-    const filename = `avatar_${req.user.id}_${Date.now()}.${ext}`;
-    fs.writeFileSync(path.join(UPLOAD_DIR, filename), buf);
+    const filename = `avatars/avatar_${req.user.id}_${Date.now()}.${ext}`;
+    let url = '';
 
-    // 用请求头里的 host 拼 URL —— 真机走局域网 IP 时也能拿到可访问地址
-    const url = `${req.protocol}://${req.headers.host}/uploads/${filename}`;
+    if (process.env.OSS_ACCESS_KEY_ID) {
+      const OSS = require('ali-oss');
+      const client = new OSS({
+        region: process.env.OSS_REGION,
+        accessKeyId: process.env.OSS_ACCESS_KEY_ID,
+        accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET,
+        bucket: process.env.OSS_BUCKET,
+        secure: true
+      });
+      const result = await client.put(filename, buf);
+      url = result.url;
+      if (url && url.startsWith('http://')) {
+        url = url.replace('http://', 'https://');
+      }
+    } else {
+      if (!fs.existsSync(UPLOAD_DIR)) {
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+      }
+      const localFilename = filename.split('/').pop();
+      fs.writeFileSync(require('path').join(UPLOAD_DIR, localFilename), buf);
+      url = `${req.protocol}://${req.headers.host}/uploads/${localFilename}`;
+    }
 
     res.json({ code: 200, msg: '头像上传成功', data: { url } });
   } catch (error) {

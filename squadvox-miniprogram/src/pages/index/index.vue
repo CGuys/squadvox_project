@@ -49,7 +49,7 @@
                 <text class="font-semibold text-cyan-300">{{ currentUser.rank || '无双王者 28星' }}</text>
                 <text class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]">{{ currentUser.positions.join(' / ') || '发育路 / 游走' }}</text>
               </view>
-              <view @click="switchTab('profile')" class="text-indigo-400 hover:text-indigo-300 text-xs flex items-center gap-1 cursor-pointer">
+              <view @click="openModal('gameProfile')" class="text-indigo-400 hover:text-indigo-300 text-xs flex items-center gap-1 cursor-pointer py-1 pl-2">
                 <text>资料设置</text>
                 <i class="fa-solid fa-angle-right text-[10px]"></i>
               </view>
@@ -155,10 +155,10 @@
             </view>
 
             <!-- Empty List State -->
-            <view v-if="filteredRooms.length === 0" class="text-center py-10 text-slate-500 text-xs">
-              <i class="fa-solid fa-gamepad text-2xl mb-2 text-slate-600 block"></i>
-              <text>暂无符合筛选条件的开黑房间</text>
-              <button @click="openCreateRoomModal" class="mt-3 px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium inline-block m-0 border-none min-h-[40px]">
+            <view v-if="filteredRooms.length === 0" class="flex flex-col items-center justify-center py-10 text-slate-500 text-xs">
+              <i class="fa-solid fa-gamepad text-3xl mb-3 text-slate-600"></i>
+              <text class="mb-4">暂无符合筛选条件的开黑房间</text>
+              <button @click="openCreateRoomModal" class="px-6 rounded-xl bg-indigo-600 text-white font-medium m-0 border-none h-10 flex items-center justify-center shadow-lg shadow-indigo-600/30 active:scale-95 transition">
                 创建第一个车队
               </button>
             </view>
@@ -367,11 +367,11 @@
 
             <view class="flex items-center gap-2">
               <button @click="saveWechatProfile"
-                      class="flex-1 h-10 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs m-0 border-none leading-normal">
+                      class="flex-1 h-10 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs m-0 border-none flex items-center justify-center shadow-md shadow-indigo-500/20 active:scale-95 transition">
                 保存微信资料
               </button>
               <button @click="randomizeProfile"
-                      class="px-3 h-10 rounded-xl bg-slate-800 text-cyan-300 border border-cyan-500/30 text-xs font-bold m-0 leading-normal">
+                      class="px-4 h-10 rounded-xl bg-slate-800 text-cyan-300 border border-cyan-500/30 text-xs font-bold m-0 flex items-center justify-center active:scale-95 transition">
                 随机换一套
               </button>
             </view>
@@ -383,82 +383,6 @@
               <text @click="switchWechatAccount" class="text-[11px] text-slate-400 active:text-slate-200">
                 切换微信账号 ›
               </text>
-            </view>
-          </view>
-
-          <!-- Game Profile Edit Card -->
-          <view class="glass-card rounded-2xl p-4 space-y-3.5 border border-vox-border">
-            <view class="flex items-center justify-between">
-              <view class="flex items-center gap-2">
-                <i class="fa-solid fa-id-card text-indigo-400"></i>
-                <text class="font-bold text-white text-sm">王者专属开黑名片</text>
-              </view>
-              <text class="text-[10px] text-slate-400">车队成员可见</text>
-            </view>
-
-            <!-- Form inputs -->
-            <view class="space-y-3 text-xs">
-              <!-- Game Region -->
-              <view>
-                <text class="block text-slate-400 mb-1">游戏大区</text>
-                <view class="grid grid-cols-2 gap-2">
-                  <button type="button" @click="currentUser.region = '微信区'"
-                          :class="['py-2 px-3 rounded-xl border font-bold flex items-center justify-center gap-1.5 transition m-0', 
-                                  currentUser.region === '微信区' ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300' : 'border-slate-700 bg-slate-900 text-slate-400']" class="min-h-[40px]">
-                    <i class="fa-brands fa-weixin text-emerald-400"></i> 微信区
-                  </button>
-                  <button type="button" @click="currentUser.region = 'QQ区'"
-                          :class="['py-2 px-3 rounded-xl border flex items-center justify-center gap-1.5 transition m-0', 
-                                  currentUser.region === 'QQ区' ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300 font-bold' : 'border-slate-700 bg-slate-900 text-slate-400']" class="min-h-[40px]">
-                    <i class="fa-brands fa-qq text-sky-400"></i> QQ区
-                  </button>
-                </view>
-              </view>
-
-              <!-- Server & In-Game ID -->
-              <view class="grid grid-cols-2 gap-2">
-                <view>
-                  <text class="block text-slate-400 mb-1">游戏服务器</text>
-                  <input placeholder-class="input-placeholder" type="text" v-model="currentUser.server"
-                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 h-10 min-h-[40px] leading-tight" />
-                </view>
-                <view>
-                  <text class="block text-slate-400 mb-1">王者游戏ID</text>
-                  <input placeholder-class="input-placeholder" type="text" v-model="currentUser.gameId"
-                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 h-10 min-h-[40px] leading-tight" />
-                </view>
-              </view>
-
-              <!-- Rank Selection -->
-              <view>
-                <text class="block text-slate-400 mb-1">当前游戏段位</text>
-                <picker @change="onRankSelectChange" :value="currentRankIndex" :range="rankList">
-                <view class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white flex justify-between items-center h-10 min-h-[40px]">
-                    <text>{{ currentUser.rank }}</text>
-                    <i class="fa-solid fa-chevron-down text-slate-500 text-[10px]"></i>
-                  </view>
-                </picker>
-              </view>
-
-              <!-- Main Positions -->
-              <view>
-                <text class="block text-slate-400 mb-1.5">擅长分路 (至多选两项)</text>
-                <view class="grid grid-cols-5 gap-1.5">
-                  <button v-for="pos in positionOptions" :key="pos" type="button"
-                          @click="togglePosition(pos)"
-                          :class="['pos-tag py-1.5 min-h-[36px] flex items-center justify-center rounded-lg border text-center transition m-0 text-xs', 
-                                  currentUser.positions.includes(pos) ? 'border-indigo-500 bg-indigo-600/30 text-indigo-300 font-bold' : 'border-slate-700 bg-slate-900 text-slate-300 font-medium']" class="min-h-[40px]">
-                    {{ pos }}
-                  </button>
-                </view>
-              </view>
-
-              <!-- Save Info Action Button -->
-              <button @click="saveUserProfile"
-                      class="w-full h-11 min-h-[44px] mt-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-indigo-500/20 active:scale-98 transition flex items-center justify-center gap-1.5 m-0 border-none leading-normal">
-                <i class="fa-solid fa-floppy-disk"></i>
-                <text>保存个人资料 (/squadvox/api/user/saveInfo)</text>
-              </button>
             </view>
           </view>
 
@@ -542,6 +466,95 @@
       <!-- ============================================== -->
       <!-- MODAL SYSTEM (7 大高保真弹窗全集)               -->
       <!-- ============================================== -->
+      <!-- Game Profile Settings Modal -->
+      <view v-if="modalVisible.gameProfile" class="fixed inset-0 z-[200] flex items-center justify-center px-4">
+        <view class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="closeModal('gameProfile')"></view>
+        <view class="relative w-full max-w-sm glass-card rounded-3xl p-5 border border-vox-border animate-fade-in-up">
+          <!-- Close button -->
+          <view @click="closeModal('gameProfile')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center cursor-pointer hover:bg-white/20 transition z-10">
+            <i class="fa-solid fa-xmark text-slate-300"></i>
+          </view>
+          
+        <!-- Game Profile Edit Form -->
+        <view class="space-y-4">
+          <view class="flex items-center justify-between">
+            <view class="flex items-center gap-2">
+              <i class="fa-solid fa-id-card text-indigo-400"></i>
+              <text class="font-bold text-white text-sm">王者专属开黑名片</text>
+            </view>
+            <text class="text-[10px] text-slate-400">车队成员可见</text>
+          </view>
+
+          <!-- Form inputs -->
+          <view class="space-y-3 text-xs">
+            <!-- Game Region -->
+            <view>
+              <text class="block text-slate-400 mb-1">游戏大区</text>
+              <view class="grid grid-cols-2 gap-2">
+                <button type="button" @click="currentUser.region = '微信区'"
+                      :class="['py-2 px-3 rounded-xl border font-bold flex items-center justify-center gap-1.5 transition m-0', 
+                            currentUser.region === '微信区' ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300' : 'border-slate-700 bg-slate-900 text-slate-400']" class="h-10">
+                <i class="fa-brands fa-weixin text-emerald-400"></i> 微信区
+                </button>
+                <button type="button" @click="currentUser.region = 'QQ区'"
+                      :class="['py-2 px-3 rounded-xl border flex items-center justify-center gap-1.5 transition m-0', 
+                            currentUser.region === 'QQ区' ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300 font-bold' : 'border-slate-700 bg-slate-900 text-slate-400']" class="h-10">
+                <i class="fa-brands fa-qq text-sky-400"></i> QQ区
+                </button>
+              </view>
+            </view>
+
+            <!-- Server & In-Game ID -->
+            <view class="grid grid-cols-2 gap-2">
+              <view>
+                <text class="block text-slate-400 mb-1">游戏服务器</text>
+                <input placeholder-class="input-placeholder" type="text" v-model="currentUser.server"
+                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 h-11 text-sm leading-[44px]" />
+              </view>
+              <view>
+                <text class="block text-slate-400 mb-1">王者游戏ID</text>
+                <input placeholder-class="input-placeholder" type="text" v-model="currentUser.gameId"
+                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 h-11 text-sm leading-[44px]" />
+              </view>
+            </view>
+
+            <!-- Rank Selection -->
+            <view>
+              <text class="block text-slate-400 mb-1">当前游戏段位</text>
+              <picker @change="onRankSelectChange" :value="currentRankIndex" :range="rankList">
+              <view class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white flex justify-between items-center h-10 min-h-[40px]">
+                <text>{{ currentUser.rank || '请选择段位' }}</text>
+                <i class="fa-solid fa-chevron-down text-slate-500 text-[10px]"></i>
+                </view>
+              </picker>
+            </view>
+
+            <!-- Main Positions -->
+            <view>
+              <text class="block text-slate-400 mb-1.5">擅长分路 (至多选两项)</text>
+              <view class="flex flex-wrap gap-2">
+                <button v-for="pos in positionOptions" :key="pos" type="button"
+                      @click="togglePosition(pos)"
+                      :class="['pos-tag px-2 py-1.5 min-w-[50px] flex items-center justify-center rounded-lg border text-center transition m-0 text-xs', 
+                            currentUser.positions.includes(pos) ? 'border-indigo-500 bg-indigo-600/30 text-indigo-300 font-bold' : 'border-slate-700 bg-slate-900 text-slate-300 font-medium']" class="h-10">
+                {{ pos }}
+                </button>
+              </view>
+            </view>
+
+            <!-- Save Info Action Button -->
+            <button @click="saveUserProfile"
+                  class="w-full h-11 mt-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-bold text-sm shadow-lg shadow-indigo-500/20 active:scale-98 transition flex items-center justify-center gap-1.5 m-0 border-none">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <text>保存游戏资料</text>
+            </button>
+          </view>
+        </view>
+
+
+        </view>
+      </view>
+
 
       <!-- MODAL 0: Avatar Selector Dialog -->
       <view v-if="modalVisible.avatarSelect" @click="closeModal('avatarSelect')"
@@ -580,7 +593,7 @@
             <view>
               <text class="block text-slate-400 mb-1">车队名称</text>
               <input placeholder-class="input-placeholder" type="text" v-model="createForm.name" maxlength="20" placeholder="例如: 连胜冲星5排缺打野"
-                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 h-10 min-h-[40px] leading-tight" />
+                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 h-11 text-sm leading-[44px]" />
             </view>
 
             <view>
@@ -589,7 +602,7 @@
                 <button v-for="ct in [{t:'5排',n:5},{t:'3排',n:3},{t:'2排',n:2}]" :key="ct.t"
                         type="button" @click="createForm.type = ct.t; createForm.maxNum = ct.n"
                         :class="['create-type-btn py-2 h-10 min-h-[40px] flex items-center justify-center rounded-xl text-center font-bold transition m-0 border-none', 
-                                createForm.type === ct.t ? 'bg-indigo-600 text-white border border-indigo-400' : 'bg-slate-900 text-slate-400 border border-slate-700']" class="min-h-[40px]">
+                                createForm.type === ct.t ? 'bg-indigo-600 text-white border border-indigo-400' : 'bg-slate-900 text-slate-400 border border-slate-700']" class="h-10">
                   {{ ct.t }} ({{ ct.n }}人)
                 </button>
               </view>
@@ -611,7 +624,7 @@
                 <text class="text-[10px] text-slate-500">留空则为公开房间</text>
               </view>
               <input placeholder-class="input-placeholder" type="password" v-model="createForm.password" maxlength="6" placeholder="4-6位数字密码"
-                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono h-10 min-h-[40px] leading-tight" />
+                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono h-11 text-sm leading-[44px]" />
             </view>
 
             <button @click="handleCreateRoomSubmit"
@@ -635,7 +648,7 @@
             <text class="text-xs text-slate-400 mt-1 block">请输入房主设置的进入密码 (演示默认: 666)</text>
           </view>
           <input placeholder-class="input-placeholder" type="password" v-model="inputPassword" maxlength="6" placeholder="输入密码"
-                 class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-center text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono tracking-widest text-sm h-10 min-h-[40px] leading-tight" />
+                 class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-center text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono tracking-widest text-sm h-11 text-sm leading-[44px]" />
           <view class="flex gap-2">
             <button @click="closeModal('enterPwd')" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs m-0 border-none min-h-[40px]">
               取消
@@ -1082,6 +1095,8 @@ const applyServerUser = (d) => {
     positions: d.position ? String(d.position).split('/').filter(Boolean) : currentUser.value.positions
   };
   saveCachedUser(currentUser.value);
+    syncCurrentUserToRoom();
+    syncCurrentUserToRoom();
 };
 
 const loadUserProfile = () => {
@@ -1345,7 +1360,8 @@ const modalVisible = ref({
   report: false,
   roomSettings: false,
   privacy: false,
-  micTest: false
+  micTest: false,
+  gameProfile: false
 });
 
 const openModal = (name) => {
@@ -1442,6 +1458,7 @@ const selectAvatar = async (av) => {
   currentUser.value.avatar = av;
   closeModal('avatarSelect');
   saveCachedUser(currentUser.value);
+    syncCurrentUserToRoom();
   showToast('已更新游戏展示头像', 'success');
   try {
     await saveInfo({ avatar: av }); // 立即落库
@@ -1611,6 +1628,19 @@ const isProfileAuthorized = computed(() => {
 });
 
 // 微信官方头像授权回调：拿到的是临时文件，先抓取上传再落库
+
+const syncCurrentUserToRoom = () => {
+  if (activeRoom.value && activeRoom.value.members) {
+    const mySeat = activeRoom.value.members.find(m => m.id === currentUser.value.id);
+    if (mySeat) {
+      mySeat.name = currentUser.value.nickname;
+      mySeat.avatar = currentUser.value.avatar;
+      mySeat.rank = currentUser.value.rank;
+      mySeat.position = currentUser.value.positions[0] || '发育路';
+    }
+  }
+};
+
 const onChooseAvatar = async (e) => {
   const filePath = e && e.detail && e.detail.avatarUrl;
   if (!filePath) return;
@@ -1621,6 +1651,7 @@ const onChooseAvatar = async (e) => {
     currentUser.value.avatar = url;
     await saveInfo({ avatar: url }); // 立即落库，避免用户忘了点保存
     saveCachedUser(currentUser.value);
+    syncCurrentUserToRoom();
     uni.hideLoading();
     showToast('微信头像已更新', 'success');
   } catch (err) {
@@ -1640,6 +1671,7 @@ const saveWechatProfile = async () => {
   try {
     await saveInfo({ nickname: nick, avatar: currentUser.value.avatar });
     saveCachedUser(currentUser.value);
+    syncCurrentUserToRoom();
     uni.hideLoading();
     showToast('微信资料已保存', 'success');
   } catch (e) {
@@ -1655,6 +1687,7 @@ const randomizeProfile = async () => {
     currentUser.value.nickname = data.nickname;
     currentUser.value.avatar = data.avatar;
     saveCachedUser(currentUser.value);
+    syncCurrentUserToRoom();
     uni.hideLoading();
     showToast(`已生成：${data.nickname}`, 'success');
   } catch (e) {
